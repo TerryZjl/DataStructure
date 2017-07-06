@@ -1,0 +1,58 @@
+#ifndef _TEST_H_
+#define _TEST_H_
+
+#include<iostream>
+using namespace std;
+
+void Swap(int* left, int* right);
+
+void SelectSort(int *a, size_t len)
+{
+	int begin = 0;
+	int end = len-1;
+
+	while (end > begin)
+	{
+		int min = begin;
+		int max = end;
+		for (size_t i = 0; i < end - begin; i++)
+		{
+			if (a[min] < a[min + 1])
+			{
+				Swap(&a[min], &a[min + 1]);
+			}
+
+			if (a[max] > a[max - 1])
+			{
+				Swap(&a[max], &a[max - 1]);
+			}
+			min++;
+			max--;
+		}
+		end--;
+		begin++;
+
+	}
+	
+}
+
+void Swap(int* left, int* right)
+{
+	int tmp = 0;
+	tmp = *left;
+	*left = *right;
+	*right = tmp;
+}
+
+void TestSelectSort()
+{
+	int a[10] = { 2,5, 4, 9, 3, 6, 8, 7, 1, 0 };
+	SelectSort(a, sizeof(a) / sizeof(a[0]));
+	for (size_t i = 0; i < 10; i++)
+	{
+		cout << a[i] << " ";
+	}
+	cout << endl;
+}
+
+#endif
