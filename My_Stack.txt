@@ -1,0 +1,73 @@
+#include<queue>
+
+template<class T>
+class Stack
+{
+public:
+	Stack()
+		:_size(0)
+	{}
+
+	void Push(T val)
+	{
+		if (q1.empty())
+		{
+			q1.push(val);
+			while (!q2.empty())
+			{
+				q1.push(q2.front());
+				q2.pop();
+			}
+		}
+		else
+		{
+			q2.push(val);
+			while (!q1.empty())
+			{
+				q2.push(q1.front());
+				q1.pop();
+			}
+		}
+		++_size;
+	}
+
+	void Pop()
+	{
+		if (!q1.empty())
+		{
+			q1.pop();
+		}
+		else
+		{
+			q2.pop();
+		}
+		--_size;
+	}
+
+	bool Empty()
+	{
+		if (q1.empty() && q2.empty())
+		{
+			return true;
+		}
+		return false;
+	}
+	int Size()
+	{
+		return _size;
+	}
+	T& Top()
+	{
+		assert(!(q1.empty() && q2.empty()));
+		if (!q1.empty())
+			return q1.front();
+		else
+			return q2.front();
+
+	}
+  
+private:
+	int _size;
+	queue<T> q1;
+	queue<T> q2;
+};
