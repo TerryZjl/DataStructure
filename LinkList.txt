@@ -1,0 +1,466 @@
+#include<iostream>
+using namespace std;
+
+
+template<class T>
+struct Node 
+{
+	T _date;
+	Node* _next;
+
+	Node(const T& val)
+		:_date(val)
+		, _next(NULL)
+	{}
+
+};
+
+
+template<class T>
+class List
+{
+public:
+	List()
+		:_head(NULL)
+		, _tail(NULL)
+	{}
+
+	
+	void Cycle(const int num)
+	{
+		Node<T>* cur = Find(num);
+		_tail->_next = cur;
+	}
+
+	//O(n2)
+	int RingLong()
+	{
+		Node<T>* cur = MeetNode();
+		Node<T>* tmp = cur;
+		int count = 0;
+		count++;
+		while (cur->_next != tmp)
+		{
+			count++;
+			cur = cur->_next;
+		}
+		return count;
+	}
+	Node<T>* EntryPoint()
+	{
+		//x = ck - y
+		Node<T>* Meet = MeetNode();
+		Node<T>* cur = _head;
+		while (Meet != cur)
+		{
+			Meet = Meet->_next;
+			cur = cur->_next;
+		}
+		return cur;
+	}
+
+	//O(n)
+	Node<T>* MeetNode()
+	{
+		Node<T>* fast = _head;
+		Node<T>* slow = _head;
+		while (fast&&fast->_next)
+		{
+			fast = fast->_next->_next;
+			slow = slow->_next;
+			if (fast == slow)
+			{
+				return fast;
+			}
+		}
+		return NULL;
+	}
+	//O(n)判断是否带环
+	bool CheckCycle()
+	{
+		if (MeetNode())
+		{
+			return true;
+		}
+		return false;
+	}
+
+	//求有环链表是否相交
+	bool CheckIntersectYes(List<T> list)
+	{
+		Node<T>* entry = list.EntryPoint();
+		Node<T>* cur = _head;
+		while (cur != _tail)
+		{
+			if (cur == entry)
+			{
+				return true;
+			}
+			cur = cur->_next;
+		}
+
+		if (cur == entry)
+			return true;
+		return false;
+	}
+
+
+	//求无环链表是否相交
+	bool CheckIntersectNO(List<T> list)
+	{
+		if (_tail == list._tail)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	Node<T>* IntersectNodeNO(List<T> list)
+	{
+		Node<T>* head2 = list._head;
+		if (_tail != list._tail)
+		{
+			return NULL;
+		}
+		
+		list._tail->_next = head2;
+        Node<T>* ret = EntryPoint();
+		
+		return ret;
+	}
+
+	//使两链表相交 
+	void Intersect(List<T>& list, int val)
+	{
+		Node<T>* pos = list._head;
+		while (pos->_date != val)
+		{
+			pos = pos->_next;
+		}
+		_tail->_next = pos;
+		_tail = list._tail;
+	}
+	Node<T>* Find(const int val)
+	{
+        Node<T>* cur = _head;
+		while (cur)
+		{
+			if (cur->_date == val)
+			{
+				return cur;
+			}
+			cur = cur->_next;
+		}
+		return cur; 
+	}
+	Node<T>* PushBack(const T& val)
+	{
+		if (_head == NULL)
+		{
+			_head = _tail = new Node<T>(val);
+			return _head;
+		}
+	 	_tail->_next = new Node<T>(val);
+		_tail = _tail->_next;
+
+		if (_head->_next == NULL)
+		{
+			_head->_next = _tail;
+		}
+
+		return _tail;
+	}
+
+	void Reverse()
+	{
+		Node<T>* cur = _head;
+		Node<T>* head = NULL;
+		Node<T>* tmp = NULL;
+		
+		while (cur)
+		{
+			tmp = head;
+			head = new Node<T>(cur->_date);
+			head->_next = tmp;
+
+		    tmp = cur;
+			cur = cur->_next;
+			delete tmp;
+		}
+
+		_head = head;
+	}
+
+	Node<T>*& BehindK(int k)
+	{
+		Node<T>* fast = _head;
+		Node<T>* slow = _head;
+		Node<T>* cur = _head;
+		int count = 0;
+		while (cur)
+		{
+			fast = fast->_next;
+			count++;
+			if (count > k)
+			{
+				slow = slow->_next;
+			}
+			cur = cur->_next;
+		}
+		return slow;
+	}
+
+	List<T>& MergeList(List<T>& root2)
+	{
+		if (_MergeList(_head, root2._head) == _head)
+		{
+			return *this;
+		}
+		return root2;
+	}
+	
+
+	void print()
+	{
+		Node<T>* cur = _root;
+		while (cur)
+		{
+			cout << cur->_date << " ";
+			cur = cur->_next;
+		}
+		cout << endl;
+	}
+
+	//若两链表相交，析构就会有问题，因为在相交之后的析构了两次
+	//~List()
+	//{
+
+	//	Node<T>* cur = _head;
+	//	Node<T>* del = cur;
+	//	if (cur)
+	//	{
+	//		cur = cur->_next;
+	//		delete del;
+	//	}
+	//}
+private:
+	Node<T>*& _MergeList(Node<T>*& root1, Node<T>*& root2)
+	{
+		Node<T>* cur1 = root1;
+		Node<T>* cur2 = root2;
+		Node<T>* pos = NULL;
+		Node<T>* tmp = NULL;
+
+		if (cur1->_date < cur2->_date)
+		{
+			tmp = cur1->_next;
+			cur1->_next = cur2;
+			cur1 = tmp;
+			pos = cur2;
+			cur2 = cur2->_next;
+		}
+		else
+		{
+			tmp = cur2->_next;
+			cur2->_next = cur1;
+			cur2 = tmp;
+			pos = cur1;
+			cur1 = cur1->_next;
+		}
+		while (cur1 != NULL && cur2 != NULL)
+		{
+			if (cur1->_date < cur2->_date)
+			{
+				pos->_next = cur1;
+				pos = cur1;
+				cur1 = cur1->_next;
+			}
+			else
+			{
+				pos->_next = cur2;
+				pos = cur2;
+				cur2 = cur2->_next;
+			}
+		}
+		if (cur1 != NULL)
+			_tail->_next = cur1;
+		else
+			_tail->_next = cur2;
+
+		if (root1->_date < root2->_date)
+			return root1;
+		else
+			return root2;
+	}
+
+private:
+	Node<T>* _head;
+	Node<T>* _tail;
+};
+
+
+
+#include"test.h"
+
+void TestMergeList()
+{
+	List<int> l1;
+	List<int> l2;
+
+	
+	//for (int i = 1; i < 10; ++i)
+	//{ 
+	//	if (i % 2 == 0)
+	//	{
+	//		l1.PushBack(i);
+	//	}
+	//	else
+	//	{
+	//		l2.PushBack(i);
+	//	}
+	//}
+
+	//l1.print();
+	//l2.print();
+    ///*1.*/List<int> ret = l1.MergeList(l2); 
+	//ret.print();
+//7.15
+	//l1.PushBack(1);
+	//l1.PushBack(3);
+	//l1.PushBack(2);
+	//l1.PushBack(6);
+	//l1.PushBack(8);
+	//l1.PushBack(14);
+	//l1.PushBack(9);
+	//l1.PushBack(0);
+	//l1.Cycle(3);
+	//if (l1.CheckCycle())
+	//{
+	//	cout << "yes" << endl;
+	//}
+	//else
+	//{
+	//	cout << "no" << endl;
+	//}
+	//cout << "入口点：" << l1.EntryPoint()->_date << endl;
+	//cout << "环长度：" << l1.RingLong() << endl;
+//7.16
+	//l1.PushBack(1);
+	//l1.PushBack(3);
+	//l1.PushBack(2);
+	//l1.PushBack(6);
+	//l1.PushBack(8);
+	//l1.PushBack(14);
+	//l1.PushBack(9);
+	//l1.PushBack(0);
+
+	//l2.PushBack(9);
+	//l2.PushBack(54);
+	//l2.PushBack(23);
+	//l2.PushBack(3);
+	//l2.PushBack(7);
+	//l2.PushBack(4);
+	//l2.PushBack(3);
+
+	//l1.Cycle(6);
+	//l2.Cycle(7);
+ //   l1.Intersect(l2, 23);//是两个链表相交
+	////使用的是l2的环和l1的头，相交且入口点相同
+
+	//bool q = true;
+	//if (l1.CheckCycle() == true)
+	//{
+	//	if (l1.CheckIntersectYes(l2))
+	//	{
+	//		cout << "带环有交点" << endl;
+	//	}
+	//	else
+	//	{
+	//		cout << "带环无交点" << endl;
+	//	}
+	//}
+	//else
+	//{
+	//	if (l1.CheckIntersectNO(l2) == true)
+	//	{
+	//		cout << "不带环有交点" << endl;
+	//	}
+	//	else
+	//	{
+	//		cout << "不带环无交点" << endl;
+	//	}
+	//}
+	//Node<int>* ret = l1.IntersectNodeNO(l2);
+	//cout << "相交点："<<ret->_date<<endl;
+	//	
+   	//l1.print();
+	///*2.*/l1.Reverse();
+	//Node<int>* ret = l1.BehindK(3);
+	//cout << ret->_date << endl;
+
+//7.18
+	//l1.PushBack(1);
+	//l1.PushBack(3);
+	//l1.PushBack(2);
+	//l1.PushBack(6);
+	//l1.PushBack(8);
+	//l1.PushBack(14);
+	//l1.PushBack(9);
+	//l1.PushBack(0);
+
+}
+
+
+
+//int add(int x)
+//{
+//	if (x <= 1)
+//	{
+//		return 1;
+//	}
+//	return add(x - 1) + x;
+//}
+
+//template<int N>
+//class add
+//{
+//public:
+//	enum 
+//	{
+//		value = add<N - 1>::value + N,
+//	};
+//};
+//
+//template<>
+//class add<1>//特化
+//{
+//public:
+//	enum
+//	{
+//		value = 1,
+//	};
+//};
+//
+//
+int add(int x, int y)
+{
+
+	int z = x^y;
+	z = z|((x&y)<<1);
+	
+	return z;
+}
+
+void TestAdd()
+{
+	cout << add(4, 16) << endl;
+	//cout << add<100>::value << endl;
+	//cout << add(100) << endl;
+}
+int main()
+{
+	//TestAdd();
+	TestMergeList(); 
+	system("pause");
+	return 0;
+}
