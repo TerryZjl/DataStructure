@@ -1,0 +1,109 @@
+
+template<class T>
+class ComplexList
+{
+public:
+	ComplexList()
+		:_head(NULL)
+		, _tail(NULL)
+	{}
+
+	void Push(T val)
+	{
+		if (_head == NULL)
+		{
+			_head = _tail = new ComplexNode<T>(val);
+			return;
+		}
+
+		_tail->_next = new ComplexNode<T>(val);
+		_tail = _tail->_next;
+		if (_head->_next == NULL)
+		{
+			_head->_next = _tail;
+		}
+	}
+
+	//随机指向
+	void RandomDire(T source, T Destination)
+	{
+		ComplexNode<T>* s = _head;
+		ComplexNode<T>* d = _head;
+		int i = 1;
+		int j = 1;
+		while (s&&d)
+		{
+			if (i)
+			{
+				if (s->_data == source)
+					i = 0;
+				else
+				   s = s->_next;
+
+			}
+			if (j)
+			{
+				if (d->_data == Destination)
+					j = 0;
+				else
+					d = d->_next;
+			}
+			if (i == 0 && j == 0)
+			{
+				s->_rand = d;
+				break;
+			}
+		}
+	}
+	ComplexNode<T>* Copy()
+	{
+		ComplexNode<T>* newNode = _head;
+		ComplexNode<T>* newhead = NULL;
+		ComplexNode<T>* curhead = _head;
+
+		//在每个结点后面复制一个相同的结点并连接起来
+		while (curhead)
+		{
+			newNode = new ComplexNode<T>(curhead->_data);
+			if (newhead == NULL)
+			{
+				newhead = newNode;
+			}
+			newNode->_next = curhead->_next;
+			curhead->_next = newNode;
+			curhead = newNode->_next;
+		}
+
+		//使复制新复制的结点的rand指针，使其指向对应的结点
+		curhead = _head;
+		ComplexNode<T>* tmp = NULL;
+		while (curhead)
+		{
+			if (curhead->_rand)
+			{
+				tmp = curhead->_rand;
+				curhead = curhead->_next;
+				curhead->_rand = tmp->_next;
+			}
+			curhead = curhead->_next;
+		}
+
+		//分离新旧链表
+		curhead = _head;
+		newNode = newhead;
+		while (newNode->_next)
+		{
+			curhead->_next = newNode->_next;
+			curhead = curhead->_next;
+			newNode->_next = curhead->_next;
+			newNode = newNode->_next;
+		}
+		curhead->_next = NULL;
+
+		return newhead;
+	}
+
+private:
+	ComplexNode<T>* _head;
+	ComplexNode<T>* _tail;
+};
