@@ -1,0 +1,57 @@
+#include<stack>
+
+template<class T>
+class MyStack
+{
+public:
+	void Push(T val)
+	{
+		s1.push(val);
+		if (s2.empty())
+		{
+			s2.push(val);
+		}
+		else
+		{
+			if (s2.top() < s1.top())
+			{
+				s2.push(s2.top());
+			}
+			else
+			{
+				s2.push(s1.top());
+			}
+		}
+		
+	}
+
+	void Pop()
+	{
+		s1.pop();
+		s2.pop();
+	}
+
+	T& Min()
+	{
+		return s2.top();
+	}
+private:
+	stack<T> s1;
+	stack<T> s2;
+};
+
+
+template<class T>
+struct ComplexNode
+{
+	T _data;
+	ComplexNode<T>* _next;
+	ComplexNode<T>* _rand;
+
+	ComplexNode(const T& val)
+		:_data(val)
+		, _next(NULL)
+		, _rand(NULL)
+	{
+	}
+};
