@@ -1,0 +1,36 @@
+	Node<T>* ReserveK(int k)
+	{
+		Node<T>* head = _head;
+		Node<T>* cur = _head;
+		int count = 0;
+		Node<T>* tmp = head;
+		bool ishead = true;
+		Node<T>* tmptail = _tail;  //使得后续反转后的链表连接到前面的链表上
+		while (cur != NULL)
+		{
+			while (count < k&&cur != NULL)
+			{
+				head = new Node<T>(cur->_date);
+				head->_next = tmp;
+				if (count == NULL)
+					_tail = head;
+				cur = cur->_next;
+				count++;
+				tmp = head;
+			}
+			if (ishead == true){ //确定反转后的链表的头部
+				_head = head;
+				ishead = false;
+			}
+			else              //若_head已确定，则后续的子链表的head连接到前面子链表的尾部即可
+			{
+				tmptail->_next = head;
+			}
+			head = cur;
+			_tail->_next = cur;
+			tmptail = _tail;
+			tmp = NULL;
+			count = 0;
+		}
+		return _head;
+	}
