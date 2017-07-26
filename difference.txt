@@ -1,0 +1,41 @@
+typedef struct node
+{
+	int elem;
+	node* next;
+}node,**pplist, *plist;
+
+//o（n^2）
+void difference(node** LA, node* LB)
+{
+    node* pa, *pb, *pre, *tmp;
+	pa = *LA;
+	pre = NULL;
+
+	while (pa)
+	{
+		pb = LB;
+		while (pb!=NULL&&pa->elem != pb->elem)
+		{
+			pb = pb->next;
+		}
+		if (pb)//说明发现b里有a->elem
+		{
+			if (!pre) //pre为空,则说明LA的第一个节点就在LA里面
+			{
+				*LA = pa->next;
+			}
+			else
+			{
+				pre->next = pa->next;
+			}
+			tmp = pa;
+			pa = pa->next;
+			free(pa);
+		}
+		else //没有
+		{
+			pre = pa;
+			pa = pa->next;
+		}
+    }
+}
