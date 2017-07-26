@@ -1,0 +1,80 @@
+{
+	bool IsSubTree(BinTree<T> t2)
+	{
+		Node* head2 = t2._root;
+		Node* head1 = _root;
+		queue<Node*> q;
+		_FindRoot(head1, head2, q);
+		while (!q.empty())
+		{
+     		if (_IsSubTree(q.front(), head2))
+				return true;
+			else
+			{
+			    q.pop();
+			}
+			
+		}
+		return false;
+
+	}
+private:
+	bool _IsSubTree(Node* root1, Node* root2)
+	{
+		if (root1 == NULL)
+			return true;
+		if (root2 == NULL)
+			return true;
+
+		if (root1->_data != root2->_data)
+			return false;
+		if (!_IsSubTree(root1->_left, root2->_left))
+		{
+			return false;
+		}
+		if (!_IsSubTree(root1->_right, root2->_right))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	void _FindRoot(Node* root1, Node* root2, queue<Node*>& q)
+	{
+		if (root1 == NULL)
+			return;
+		if (root1->_data == root2->_data)
+		{
+			q.push(root1);
+		}
+		_FindRoot(root1->_left, root2,q);
+		_FindRoot(root1->_right, root2,q);
+	}
+}
+
+void TestTree()
+{/*
+	int tree[] = { 1, 2, 3, '#', 7,'#','#', 4, '#', '#', 5, 6 };
+	BinTree<int> Tree(tree, sizeof(tree) / sizeof(tree[0]), '#');
+
+	int tree1[] = { 2, '#', 7, '#', '#' };
+	BinTree<int> Tree1(tree1, sizeof(tree1) / sizeof(tree1[0]), '#');*/
+	int tree[] = { 1, 2, 2, '#', 7, '#', '#', 4, '#', '#', 5, 6 };
+	BinTree<int> Tree(tree, sizeof(tree) / sizeof(tree[0]), '#');
+
+	int tree1[] = { 2, '#', 7, '#', '#' };
+	BinTree<int> Tree1(tree1, sizeof(tree1) / sizeof(tree1[0]), '#');
+
+	Tree.PrevOrder();
+	Tree.InOrder();
+	Tree.PostOrder();
+	Tree.LevelOrder();
+
+	if (Tree.IsSubTree(Tree1))
+	{
+		cout << "yes" << endl;
+	}
+	else
+	{
+		cout << "no" << endl;
+	}
