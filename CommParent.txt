@@ -107,12 +107,14 @@ private:
 		}
 		return false;
 	}
-	Node* _IsCommParent(Node* root, Node* x1, Node* x2)
+        Node* _IsCommParent(Node* root, Node* x1, Node* x2)
 	{
 		if (root == NULL)
 			return NULL;
 		bool x1InLeft, x1InRight, x2Inleft, x2InRight;
 
+
+		//判断两个节点分别是在左右哪个子树
 		x1InLeft = Find(root->_left,x1);
 		if (x1InLeft == false)
 		{
@@ -124,7 +126,7 @@ private:
 		{
 			x2InRight = Find(root->_right, x2);
 		}
-
+		//若有一个节点在当前节点，另一个在左右子树，则祖先节点是当前节点
 		if ((x1 == root && (x2InLeft || x2InRight))|| x2 == root && (x1InLeft || x1InRight))
 		{
 			return root;
@@ -133,19 +135,21 @@ private:
 		assert(x1InLeft || x1InRight);
 		assert(x2InLeft || x2InRight);
 
+		//如果一个节点在左或者一个节点在右，当前节点就是祖父节点
 		if ((x1InLeft && x2InRight)	|| (x2InLeft && x1InRight))
 		{
 			return root;
 		}
 		else if (x1InLeft && x2InLeft)
-		{
+		{//否则，两节点在左边，去左边递归
 			return _IsCommParent(root->_left, x1, x2);
 		}
 		else
-		{
+		{//同上
 			return _IsCommParent(root->_right, x1, x2);
 		}
 	}
+	
 }
 
 cout<<Tree.IsCommParent(Tree.FindNode(5), Tree.FindNode(6))->_data << endl;
