@@ -1,0 +1,151 @@
+
+2.1求二叉树中两个节点的最近公共祖先。 
+
+要求考虑以下三种种情况，给出解决方案，并解决： 
+
+1：二叉树每个节点有parent（三叉链） 
+Node* IsCommParent(Node* node1, Node* node2)
+	{
+		if (_root == NULL)
+		{
+			return NULL;
+		}
+		queue<Node*> q;
+		Node* cur = node1;
+		q.push(cur);
+		while (cur != _root)
+		{
+			cur = cur->_prev;
+			q.push(cur);
+		}
+		Node* cur2 = node2;
+		while (!q.empty())
+		{
+			cur2 = node2;
+			cur = q.front();
+			while (cur2!=NULL)
+			{
+				if (cur2->_key == cur->_key)
+					return cur;
+				cur2 = cur2->_prev;
+			}
+			q.pop();
+		}
+	}
+2.2
+
+2：二叉树是搜索二叉树。 
+Node* CommParent(Node* node1, Node* node2)
+	{
+		Node* cur = _root;
+		if (_root == NULL)
+			return NULL;
+
+		Node* right = node2;
+		Node* left = node1;
+		if (node1->_key > node2->_key)
+		{
+			left = node2;
+			right = node1;
+		}
+		
+		while (cur)
+		{
+			if (cur->_key > right->_key)
+			{
+				cur = cur->_left;
+			}
+			else if (cur->_key<left->_key)
+			{
+				cur = cur->_right;
+			}
+			else
+			{
+				return cur;
+			}
+		}
+	}
+2.3
+3：就是普通二叉树。（尽可能实现时间复杂度为O（N））
+{
+Node* IsCommParent(Node* node1, Node* node2)
+	{
+		return _IsCommParent(_root, node1, node2);
+	}
+
+private:
+	Node* _FindNode(Node* root,const T& val)
+	{
+		if (root == NULL)
+			return NULL;
+		if (root->_data == val)
+		{
+			return root;
+		}
+		Node* ret = _FindNode(root->_left, val);
+		if (ret != NULL)
+		{
+			return ret;
+		}
+		ret = _FindNode(root->_right, val);
+		return ret;
+	}
+	bool Find(Node* root, Node* x)
+	{
+		if (root == NULL)
+			return false;
+
+		if (root == x)
+			return true;
+		if (Find(root->_left, x))
+		{
+			return true;
+		}
+		if (Find(root->_right, x))
+		{
+			return true;
+		}
+		return false;
+	}
+	Node* _IsCommParent(Node* root, Node* x1, Node* x2)
+	{
+		if (root == NULL)
+			return NULL;
+		bool x1InLeft, x1InRight, x2Inleft, x2InRight;
+
+		x1InLeft = Find(root->_left,x1);
+		if (x1InLeft == false)
+		{
+			x1InRight = Find(root->_right,x1);
+		}
+
+		bool x2InLeft = Find(root->_left, x2);
+		if (x2InLeft == false)
+		{
+			x2InRight = Find(root->_right, x2);
+		}
+
+		if ((x1 == root && (x2InLeft || x2InRight))|| x2 == root && (x1InLeft || x1InRight))
+		{
+			return root;
+		}
+
+		assert(x1InLeft || x1InRight);
+		assert(x2InLeft || x2InRight);
+
+		if ((x1InLeft && x2InRight)	|| (x2InLeft && x1InRight))
+		{
+			return root;
+		}
+		else if (x1InLeft && x2InLeft)
+		{
+			return _IsCommParent(root->_left, x1, x2);
+		}
+		else
+		{
+			return _IsCommParent(root->_right, x1, x2);
+		}
+	}
+}
+
+cout<<Tree.IsCommParent(Tree.FindNode(5), Tree.FindNode(6))->_data << endl;
