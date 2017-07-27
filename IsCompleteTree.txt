@@ -1,0 +1,53 @@
+1.
+//判断一棵树是否是完全二叉树
+	bool IsCompleteTree()
+	{
+		if (_root == NULL)
+			return true;
+
+		queue<Node*> q;
+		Node* cur = _root;
+	
+		q.push(cur);
+		cur = q.front();
+		while (!q.empty())
+		{
+			if (cur->_left != NULL)
+			{
+				q.push(cur->_left);
+				if (cur->_right != NULL)
+				{
+					q.push(cur->_right);
+					q.pop();
+					cur = q.front();
+				}
+				else
+				{
+					q.pop();
+					while (!q.empty())
+					{
+						cur = q.front();
+						if (cur->_left != NULL || cur->_right != NULL)
+							return false;
+						q.pop();
+					}
+				}
+			}
+			else
+			{
+				if (cur->_right != NULL)
+					return false;
+				q.pop();
+				while (!q.empty())
+				{
+					cur = q.front();
+					if (cur->_left != NULL || cur->_right != NULL)
+						return false;
+					q.pop();
+				}
+			}
+		}
+		return true;
+	}
+
+
