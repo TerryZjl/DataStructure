@@ -1,12 +1,12 @@
 #include<iostream>
-#include<assert.h>
+#include<list>
 using namespace std;
 
 
 template<class T>
 struct ListNode
 {
-	int _data;
+	T _data;
 	ListNode* _next;
 	ListNode* _prev;
 	ListNode(const T& x = 0)
@@ -18,11 +18,13 @@ struct ListNode
 
 
 template<class T, class P, class R>
-class __ListIterator
+struct __ListIterator
 {
 	typedef __ListIterator<T, P, R> self;
 	typedef ListNode<T> Node;
-public:
+
+	Node* _it;
+
 	__ListIterator(Node* node)
 		:_it(node)
 	{}
@@ -36,22 +38,47 @@ public:
 	{
 		_it = NULL;
 	}
-	Node*& operator++()
+	self& operator++()
 	{
-		assert(_it != NULL);
 		_it = _it->_next;
-		return _it;
+		return *this;
 	}
-	Node* operator++(int)
+	//先构造了一个tmp对象，然后返回时又调用拷贝构造，构造一个临时对象，把这个临时对象返回。然后调用析构函数析构tmp对象
+	//self operator++(int)
+	//{
+	//	self tmp(_it);
+	//	_it = _it->_next;
+	//	return tmp;
+	//}
+	
+	//而这种方法不用创建临时对象。
+	self& operator++(int)
 	{
-		assert(_it != NULL);
 		Node* tmp = _it;
 		_it = _it->_next;
-		return tmp;
+		return self(tmp);
 	}
-	R operator*()
+
+	self& operator--()
+	{
+		_it = _it->_prev;
+		return self(_it);
+	}
+	self& operator--(int)
+	{
+		Node* tmp = _it;
+		_it = _it->_prev;
+		return self(tmp);
+	}
+
+	R operator*() const
 	{
 		return _it->_data;
+	}
+
+	P operator->() const
+	{
+		return &(_it->_data);
 	}
 
 
@@ -66,8 +93,6 @@ public:
 			return false;
 		}
 	}
-private:
-	Node* _it;
 };
 template<class T>
 class List
@@ -99,11 +124,47 @@ public:
 		_head->_prev = tmp;
 		tmp->_next = _head;
 	}
-	Node* Begin()
+	Iterator Insert(Iterator It, const T& x)
+	{
+		Node* tmp = It._it->_prev;
+		Node* newNode = new Node(x);
+		tmp->_next = newNode;
+		newNode->_prev = tmp;
+
+		newNode->_next = It._it;
+		It._it->_prev = newNode;
+		return newNode;
+	}
+
+	Iterator Erase(Iterator It)
+	{
+		Node* tmp = It._it;
+		Node* Prev = tmp->_prev;
+		Node* Next = tmp->_next;
+
+		Prev->_next = Next;
+		Next->_prev = Prev;
+		delete tmp;
+		return Iterator(Next);
+	}
+	//下面这种办法可以在erase之后可以直接++，加到下一个数字。
+	/*Iterator Erase(Iterator It)
+	{
+		Node* tmp = It._it;
+		Node* Prev = tmp->_prev;
+		Node* Next = tmp->_next;
+
+		Prev->_next = Next;
+		Next->_prev = Prev;
+		delete tmp;
+		It = Prev;
+		return It;
+	}*/
+	Iterator Begin()
 	{
 		if (_head->_next == _head)
 			return NULL;
-		return _head->_next;
+		return Iterator(_head->_next);
 	}
 	Iterator End()
 	{
@@ -114,19 +175,51 @@ public:
 private:
 	Node* _head;
 };
+
+struct AA
+{
+	int _data;
+	AA(const int& x)
+	{
+		_data = x;
+	}
+};
+
 int main()
 {
-	List<int> l;
+
+	List<AA> l;
 	l.PushBack(1);
 	l.PushBack(2);
 	l.PushBack(3);
 	l.PushBack(4);
 
-	List<int>::Iterator it = l.Begin();
+	List<AA>::Iterator it = l.Begin();
+
+	//while (it != l.End())
+	//{
+	//	if (it->_data == 2)
+	//	{
+	//		it = l.Insert(it,10);
+	//		++it;
+	//	}
+	//	++it;
+	//}
 	while (it != l.End())
 	{
-		cout << *it << endl;
+		if(it->_data%2== 0)
+		{
+			 l.Erase(it);
+		}
+		it++;	
+	}
+	it = l.Begin();
+	while (it != l.End())
+	{
+		cout << it->_data << endl;
 		it++;
 	}
+	
+
 	return 0;
 }
