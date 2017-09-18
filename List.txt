@@ -1,0 +1,132 @@
+#include<iostream>
+#include<assert.h>
+using namespace std;
+
+
+template<class T>
+struct ListNode
+{
+	int _data;
+	ListNode* _next;
+	ListNode* _prev;
+	ListNode(const T& x = 0)
+		:_data(x)
+		, _next(NULL)
+		, _prev(NULL)
+	{}
+};
+
+
+template<class T, class P, class R>
+class __ListIterator
+{
+	typedef __ListIterator<T, P, R> self;
+	typedef ListNode<T> Node;
+public:
+	__ListIterator(Node* node)
+		:_it(node)
+	{}
+
+	__ListIterator(const self& It)
+	{
+		_it = It._it;
+	}
+
+	~__ListIterator()
+	{
+		_it = NULL;
+	}
+	Node*& operator++()
+	{
+		assert(_it != NULL);
+		_it = _it->_next;
+		return _it;
+	}
+	Node* operator++(int)
+	{
+		assert(_it != NULL);
+		Node* tmp = _it;
+		_it = _it->_next;
+		return tmp;
+	}
+	R operator*()
+	{
+		return _it->_data;
+	}
+
+
+	bool operator!=(self& It)
+	{
+		if (_it != It._it)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+private:
+	Node* _it;
+};
+template<class T>
+class List
+{
+	typedef ListNode<T> Node;
+public:
+	typedef __ListIterator<T, T*, T&> Iterator;
+	typedef __ListIterator<const T, const T*, const T&> ConstIterator;
+public:
+	List()
+		:_head(new Node)
+	{
+		_head->_next = _head;
+		_head->_prev = _head;
+	}
+	void PushBack(const T& x)
+	{
+		Node* tmp = new Node(x);
+		tmp->_prev = _head->_prev;
+		tmp->_next = _head;
+		_head->_prev = tmp;
+		tmp->_prev->_next = tmp;
+	}
+	void PopBack()
+	{
+		Node* tmp = _head->_prev->_prev;
+		delete _head->_prev;
+
+		_head->_prev = tmp;
+		tmp->_next = _head;
+	}
+	Node* Begin()
+	{
+		if (_head->_next == _head)
+			return NULL;
+		return _head->_next;
+	}
+	Iterator End()
+	{
+		if (_head->_next == _head)
+			return NULL;
+		return Iterator(_head);
+	}
+private:
+	Node* _head;
+};
+int main()
+{
+	List<int> l;
+	l.PushBack(1);
+	l.PushBack(2);
+	l.PushBack(3);
+	l.PushBack(4);
+
+	List<int>::Iterator it = l.Begin();
+	while (it != l.End())
+	{
+		cout << *it << endl;
+		it++;
+	}
+	return 0;
+}
