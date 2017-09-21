@@ -1,81 +1,5 @@
-//#include<iostream>
-//using namespace std;
-//
-//template <class T>
-//class  Vector
-//{
-//	typedef T* Iterator;
-//	typedef T* Pointer;
-//	typedef const T* ConstPointer;
-//	typedef T* Iterator;
-//	typedef const T* ConstIterator;
-//	typedef T& Reference;
-//	typedef const T& ConstReference;
-//
-//protected:
-//	Iterator start;
-//	Iterator finish;
-//	Iterator end_of_storage;
-//
-//public:
-//	Vector(ConstIterator first)
-//	{
-//	   size_t n = 0;
-//	   start(NULL);
-//	   finish = start + n;
-//	   end_of_storage = finish;
-//	}
-//
-//	~Vector() {
-//		destroy(start, finish);
-//		deallocate();
-//	}
-//	Iterator begin() 
-//	{
-//		return start; 
-//	}
-//
-//	const_iterator begin() const 
-//	{
-//		return start; 
-//	}
-//	Iterator end() 
-//	{
-//		return finish; 
-//	}
-//	const_iterator end() const 
-//	{
-//		return finish;
-//	}
-//	reverse_iterator rbegin() { return reverse_iterator(end()); }
-//	const_reverse_iterator rbegin() const {
-//		return const_reverse_iterator(end());
-//	}
-//	reverse_iterator rend() { return reverse_iterator(begin()); }
-//	const_reverse_iterator rend() const {
-//		return const_reverse_iterator(begin());
-//	}
-//	size_type size() const { return size_type(end() - begin()); }
-//	size_type max_size() const { return size_type(-1) / sizeof(T); }
-//	size_type capacity() const { return size_type(end_of_storage - begin()); }
-//	bool empty() const { return begin() == end(); }
-//	reference operator[](size_type n) { return *(begin() + n); }
-//	const_reference operator[](size_type n) const { return *(begin() + n); }
-//
-//	vector() : start(0), finish(0), end_of_storage(0) {}
-//	vector(size_type n, const T& value) { fill_initialize(n, value); }
-//	vector(int n, const T& value) { fill_initialize(n, value); }
-//	vector(long n, const T& value) { fill_initialize(n, value); }
-//	explicit vector(size_type n) { fill_initialize(n, T()); }
-//
-//	vector(const vector<T, Alloc>& x) {
-//		start = allocate_and_copy(x.end() - x.begin(), x.begin(), x.end());
-//		finish = start + (x.end() - x.begin());
-//		end_of_storage = finish;
-//	}
-//};
-
 #include<iostream>
+#include<assert.h>
 #include<vector>
 using namespace std;
 
@@ -85,107 +9,165 @@ class Vector
 public:
 	typedef T* Iterator;  //vector结点的指针既可以进行++一类的操作
 	typedef T& Ref;
-	typedef T* p;
+	typedef T* Ptr;
 	Vector()
 		:_start(NULL)
 		, _finish(NULL)
-		, _end(NULL)
+		, _endofstorage(NULL)
 	{}
 	void PushBack(const T& x)
 	{
 		CheckCapacity();
-		*_finish = x;
-		++_finish;
+		Insert(_finish, x);
 	}
 	void PopBack()
 	{
+		assert(_start != _finish);
 		--_finish;
 	}
-	Iterator& Back()
+	T& Back()
 	{
-		return _end;
+		assert(_start != _finish);
+		return *(_finish-1);
 	}
-	Iterator& fornt()
+	T& fornt()
 	{
+		assert(_start != _finish);
+		return *_start;
+	}
+	Iterator Begin()
+	{
+		assert(_start != _finish);
 		return _start;
 	}
-	size_t size()
+	Iterator End()
 	{
-		return _end - _start;
+		assert(_start != _finish);
+		return _finish;
 	}
 	void Expend()
 	{
-		size_t n = _finish- _start;
-		size_t capacity = size();
-		capacity = 0 < n ? capacity * 2 : 1;
-		p tmp = new T[capacity];
-		for (size_t i = 0; i < size(); i++)
+		size_t n = Size();
+		size_t capacity = _endofstorage - _start;
+		capacity = (capacity * 2 + 3);
+		Iterator tmp = new T[capacity];
+		for (size_t i = 0; i < n; i++)
 		{
 			tmp[i] = _start[i];
 		}
-		delete _start;
+		delete []_start;
 		_start = tmp;
-		_finish = _start+n;
-		_end = _start + capacity;
+		_finish = _start + n;
+		_endofstorage = _start + capacity;
 	}
 	void CheckCapacity()
 	{
-		if (_finish == _end)
+		if (_finish == _endofstorage)
 		{
 			Expend();
 		}
 	}
-	
-	Iterator insert(Iterator cur, const T& x)
+	Iterator Erase(Iterator it)
 	{
-		size_t n = cur - Begin();
-		assert(cur == end());
-		if (_end != _finish && cur == end())
+		assert(it != End());
+		if (it == (End()-1))
 		{
-			PushBack(x);
+			--_finish;
 		}
 		else
 		{
-
+			size_t tmp = it - _start;
+			size_t n = Size();
+			for (; tmp < n-1; tmp++)
+			{
+				it[tmp] = it[tmp + 1];
+			}
+			--_finish;
 		}
-		return Begin() + n;
-	}
-	Iterator& Begin()
-	{
-		return _start;
+	    return it;
 	}
 	
-	Iterator& End()
+	Iterator Insert(Iterator pos, const T& x)
 	{
-		return _finish;
-	}
-	~Vector()
-	{
-		delete[] _start;
-		_start = NULL;
+		CheckCapacity();
+		if (pos == _finish)
+		{
+			*_finish = x;
+		}
+		else
+		{
+			size_t tmp = pos - _start;
+			size_t n = Size();
+			for (; n >= tmp; n--)
+			{
+				_start[n] = _start[n - 1];
+			}
+		}
+		++_finish;
+
+		return pos;
 	}
 
+	bool Empty()
+	{
+		return _start == _finish;
+	}
+	size_t MaxSize()
+	{
+		return _endofstorage - _start;
+	}
+
+	size_t Size()
+	{
+		return _finish - _start;
+	}
+
+	~Vector()
+	{
+		if (_start)
+		{
+			delete[] _start;
+			_start = NULL;
+		}
+	}
 private:
 	Iterator _start;
 	Iterator _finish;;
-	Iterator _end;
+	Iterator _endofstorage;
 };
 
 int main()
 {
+
+	//vector<int> v1;
+	//v1.push_back(1);
+	//v1.push_back(2);
+	//v1.push_back(3);
+	//v1.push_back(4);
+	//vector<int>::iterator it = v1.end();
+	//v1.erase(v1.end());
+
 	Vector<int> v;
 	v.PushBack(1);
 	v.PushBack(2);
 	v.PushBack(3);
 	v.PushBack(4);
-	v.PopBack();
-	v.PopBack();
-	v.PopBack();
-	Vector<int>::Iterator it = v.Begin();
+	
+
+	Vector<int>::Iterator it = v.Begin();	
+	//v.Erase(v.End()-1);
 	while (it !=  v.End())
 	{
-		if ()
-		it++;
+		cout << *it << endl;
+		if (*it == 2)
+		{
+			it = v.Erase(it);
+		}
+		else
+		{
+			it++;
+		}
+	
 	}
 	return 0;
 }
