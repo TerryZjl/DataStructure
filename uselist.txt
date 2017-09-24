@@ -1,0 +1,152 @@
+#include<iostream>
+#include<list>
+using namespace std;
+
+void Testlist()
+{
+	list<int> s1;
+	s1.push_back(1);
+	s1.push_back(2);
+	s1.push_back(3);
+	s1.push_back(4);
+	s1.push_back(5);
+
+	
+	//Iterator部分的操作
+	//1.begin & end(配合iterator使用)
+	list<int>::iterator it1 = s1.begin();
+	cout << "正向迭代器打印:";
+	while (it1!=s1.end())
+	{
+		cout<< *it1 <<" ";
+		++it1;
+	}
+	cout << endl;
+
+	//2.rbegin & rend (配合reverse_iterator使用)
+	list<int>::reverse_iterator rit1 = s1.rbegin();
+	cout << "反向迭代器打印:";
+	while (rit1 != s1.rend())
+	{
+		cout<< *rit1 << " ";
+		++rit1;
+	}
+	cout << endl;
+
+	//3.void resize (size_type n, value_type val = value_type());
+	cout << s1.max_size() << endl;
+	cout << s1.size() << endl;
+
+	//4.void resize (size_type n, value_type val = value_type());
+	cout << "resize:" << endl;
+	print(s1);
+	s1.resize(7,5);//改变list的容量，并把增加的结点插入5
+	print(s1);
+	s1.resize(10); //改变list容量，若没指定插入的值，默认为0
+	print(s1);
+	s1.resize(4);//改变list容量，若是所需容量，则删除后面的结点
+	print(s1);
+
+	//5.void remove (const value_type& val);
+	cout << "remove:" << endl;
+	s1.resize(10, 1);
+	print(s1);
+	s1.remove(1);  //删除list里所有的指定的元素
+	print(s1);
+
+	/*6.void splice (iterator position, list& x);
+		void splice(iterator position, list& x, iterator i);
+		void splice(iterator position, list& x, iterator first, iterator last);*/
+	cout << "splice:" <<endl ;
+	cout << "s2.splice(s2.begin(), s1);" << endl;
+	list<int> s2;
+	print(s1);         //s ：2 3 4
+	print(s2);        //s2：
+	s2.splice(s2.begin(), s1); //把s1链表里的值插入到时s2链表里的begin()前面，并删除s1里的数据
+	print(s1);         //s ：
+	print(s2);		  //s2：2 3 4
+
+	cout <<"s1.splice(it1, s2, s2.begin());"<< endl;
+	s1.push_back(10);
+	s1.push_back(20);
+	s1.push_back(30);
+	it1 = s1.begin();
+	++it1;    //it1 指向 20
+	print(s1);                      //s ：10 20 30
+	print(s2);                     //s2： 2  3  4 
+	s1.splice(it1, s2, s2.begin()); //在s1链表里元素20的前面插入s2的begin()元素，并删除s2里的begin元素
+	print(s1);					   //s  ：10 2 20 30
+	print(s2);                     //s2 ： 3 4
+	cout << "s2.splice(s2.begin(), s1, it1,s1.end());" << endl;
+	list<int>::iterator it2 = s2.begin();
+	++it2;
+	print(s1);
+	print(s2);
+	s2.splice(s2.begin(), s1, it1,s1.end()); //把s1链表里的20-30这个区间里的值插入到s2链表begin前面
+	print(s1);       
+	print(s2);		  
+
+	//7.reverse
+	cout << "reverse" << endl;
+	print(s2);
+	s2.reverse();  //将链表里的元素逆序打印一遍
+	print(s2);
+
+	//8.sort
+	cout << "sort" << endl;
+	s2.sort();    //将链表的元素按照升序排序
+	print(s2);
+
+
+
+	//9.merge 合并链表
+	cout << "merge" << endl;
+	s1.sort();
+	s2.sort();
+	print(s1);
+	print(s2);
+	s1.merge(s2);  //将两个有序链表合并起来，并且合并后也有序，另一个链表被删除
+	print(s1);
+	print(s2);
+
+	//10.unique
+	cout << "unique" << endl;
+	s1.push_back(10);
+	print(s1);
+	s1.sort();   //删除有序链表里重复的值
+	s1.unique();
+	print(s1);
+
+	//11.clear
+	cout << "clear" << endl;
+	print(s1);
+	s1.clear();
+	print(s1);
+
+	//12.assign
+	cout << "assign" << endl;
+	int a[] = { 1, 2, 3, 4, 5 };
+	s1.assign(a+1 , a + 3);  //重新分配链表里的内容，并重新修改其大小，注意参数是左闭右开区间。
+	print(s1);
+	
+	/*list<int>::iterator it1 = s.begin();
+	while (it1 != s.end())
+	{
+		if (*it1 % 2 == 0)
+		{
+			it1 = s.erase(it1);
+		}
+		++it1;
+	}*/
+}
+
+int main()
+{
+
+	//TestList();
+	Testlist();
+
+		
+
+	return 0;
+}
