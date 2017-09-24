@@ -81,10 +81,10 @@ struct __ListIterator
 		return _it->_data;
 	}
 
-	//P operator->() const
-	//{
-	//	return &(_it->_data);
-	//}
+	P operator->() const
+	{
+		return &(_it->_data);
+	}
 
 	bool operator==(self& It)
 	{
@@ -128,13 +128,36 @@ public:
 		_head->_prev = tmp;
 		tmp->_prev->_next = tmp;
 	}
+	void PushFront(const T& x)
+	{
+		Node* tmp = new Node(x);
+		
+		Node* Next = _head;
+		Node* Prev = _head->_prev;
+		_head = tmp;
+		_head->_next = Next;
+		_head->_prev = Prev;
+	}
 	void PopBack()
 	{
-		Node* tmp = _head->_prev->_prev;
+		Node* Next = _head;
+		Node* Prev = _head->_prev->_prev;
 		delete _head->_prev;
 
-		_head->_prev = tmp;
-		tmp->_next = _head;
+		Prev->_next = Next;
+		Next->_prev = Prev;
+	}
+	void PopFront()
+	{
+		Node* Next = _head->_next;
+		Node* Prev = _head->_prev;
+		delete _head;
+		_head = Next;
+		_head->_prev = Prev;
+
+		Prev->_next = _head;
+
+
 	}
 	Iterator Insert(Iterator It, const T& x)
 	{
@@ -192,11 +215,11 @@ public:
 		return *(--End());
 	}
 
-	ConstIterator Begin(int) const
+	ConstIterator Begin() const
 	{
 		return ConstIterator(_head->_next);
 	}
-	ConstIterator End(int) const
+	ConstIterator End() const
 	{
 		return ConstIterator(_head);
 	}
@@ -208,6 +231,29 @@ public:
 	{
 		return _head;
 	}
+	
+
+	void Clear()
+	{
+		Node* cur = _head->_next;
+		while (cur != _head)
+		{
+			Node* tmp = cur->_next;
+			delete cur;
+			cur = tmp;
+		}
+
+		_head->_next = _head;
+		_head->_prev = _head;
+	}
+
+	~List()
+	{
+		Clear();
+		delete _head;
+		_head = NULL;
+	}
+
 private:
 	Node* _head;
 };
@@ -221,54 +267,77 @@ struct AA
 	}
 };
 
-int main()
+template<class T>
+void printConstList(const List<T>& l)
 {
-	//list<int> s;
-	//s.push_back(1);
-	//s.push_back(2);
-	//s.push_back(3);
-	//s.push_back(4);
-	//s.push_back(5);
-	//list<int>::iterator it = s.begin();
-	//while (it != s.end())
-	//{
-	//	if (*it == 3)
-	//		*it = 10;
-	//	cout <<*it<< endl;
-	//	++it;
-	//}
- 	List<int> l;
+	List<T>::ConstIterator it = l.Begin();
+	while (l.End() != it)
+	{
+		//*it = 10;
+		cout << *it << endl;
+		++it;
+	}
+}
+
+template<class T>
+void printList(List<T>& l)
+{
+	List<T>::Iterator it = l.Begin();
+	while (l.End() != it)
+	{
+		cout << *it << endl;
+		++it;
+	}
+}
+template<class T>
+void print(list<T>& s)
+{
+	list<T>::iterator it = s.begin();
+	cout << "正向迭代器打印:";
+	while (it != s.end())
+	{
+		cout << *it << " ";
+		++it;
+	}
+	cout << endl;
+}
+
+void TestList()
+{
+	List<int> l;
 	l.PushBack(1);
 	l.PushBack(2);
 	l.PushBack(3);
 	l.PushBack(4);
 
-	List<int>::ConstIterator it = l.Begin();
+	//使用const迭代器
+	//printConstList(l);
+	
+	l.PopBack();
+	printList(l);
+	l.PopFront();
+	l.Clear();
+	printList(l);
 
-	//while (it != l.End())
-	//{
-	//	if (*it == 2)
-	//	{
-	//		*it= 10;
-	//	}
-	//	++it;
-	//}
-	//while (it != l.End())
-	//{
-	//	if(it->_data%2== 0)
-	//	{
-	//		 l.Erase(it);
-	//	}
-	//	it++;	
-	//}
-
-	it = l.Begin();
+	/*List<int>::Iterator it = l.Begin();
 	while (it != l.End())
 	{
-		cout <<*it << endl;
-		it++;
-	}
-		
+		if (*it % 2 == 0)
+		{
+			it = l.Erase(it);
+		}
+		else
+		{
+			it++;
+		}
+	}*/
+}
+
+
+int main()
+{
+
+	TestList();
 
 	return 0;
 }
