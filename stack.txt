@@ -1,0 +1,96 @@
+#ifndef _STACK_H_
+#define _STACK_H_
+
+
+#include<iostream>
+#include<vector>
+using namespace std;
+
+template<class T>
+class Stack
+{
+
+public:
+	void Push(const T& x)
+	{
+		v.push_back(x);
+	}
+
+	void Pop()
+	{
+		v.pop_back();
+	}
+
+	size_t Size()
+	{
+		return v.size();
+	}
+
+	bool Empty()
+	{
+		return v.empty();
+	}
+	T& Top()
+	{
+		return v.back();
+	}
+private:
+	vector<T> v;
+};
+
+
+
+
+template<class T>
+class mystack
+{
+public:
+	void Push(const T& x)
+	{	
+		if (Empty())
+		{
+			min = x;
+		}
+		else
+		{
+			if (min > x)
+			{
+				min = x;
+			}
+		}
+
+		v.push_back(x);
+	}
+	void Pop(){    v.pop_back();	}
+	size_t Size(){    return v.size();	}
+	bool Empty(){	return v.empty();	}
+	T& Top(){	return v.back();	}
+	T Min()
+	{
+		return min;
+	}
+private:
+	vector<T> v;
+	T min;
+};
+template<class T>
+void Print(mystack<T>& s)
+{
+	while (!s.Empty())
+	{
+		cout << s.Top() << endl;
+		s.Pop();
+	}
+}
+void TestStack()
+{
+	mystack<int> s;
+	s.Push(1);
+	s.Push(2);
+	s.Push(3);
+	s.Push(4);
+	s.Push(5);
+	Print(s);
+	cout << s.Min()<< endl;
+}
+#endif
