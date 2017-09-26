@@ -1,0 +1,52 @@
+#ifndef _QUEUE_H_
+#define _QUEUE_H_
+
+#include<iostream>
+#include<list>
+using namespace std;
+
+template<class T, class Container = list<T>>
+class Queue
+{
+
+public:
+	void Push(const T& x)
+	{
+		q.push_back(x);
+	}
+	void Pop()
+	{
+		q.pop_front();
+	}
+
+	T& Front()
+	{
+		return q.front();
+	}
+	T& Back()
+	{
+		return q.back();
+	}
+	bool Empty()
+	{
+		return q.empty();
+	}
+	size_t Size()
+	{
+		return q.size();
+	}
+private:
+	Container q;
+};
+void TestQueue()
+{
+	Queue<int> q;
+	q.Push(1);
+	q.Push(2);
+	q.Push(3);
+	q.Push(4);
+	cout << "Front" << q.Front() << endl;
+	cout << "Back" << q.Back() << endl;
+
+}
+#endif
