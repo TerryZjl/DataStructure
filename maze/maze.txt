@@ -1,0 +1,324 @@
+#define _CRT_SECURE_NO_WARNINGS 1 
+#include<iostream>
+#include<assert.h>
+#include<stack>
+#include<list>
+using namespace std;
+
+struct Pos
+{
+	int _row;
+	int _col;
+};
+
+template<int M = 0, int N = 0>
+class Maze
+{
+public:
+	//Maze(int maze[][N]) 
+	Maze(int* maze)
+	{
+		
+		for (int i = 0; i < M; i++)
+		{
+			for (int j = 0; j < N; j++)
+			{
+				_maze[i][j] = maze[i*M+j];
+			}
+		}
+	}
+	void Print()
+	{
+		for (int i = 0; i < M; i++)
+		{
+			for (int j = 0; j < N; j++)
+			{
+				cout << _maze[i][j] << " ";
+			}
+			cout << endl;
+		}
+	}
+	bool CheckIsAccess(Pos pos)
+	{
+		if (pos._col >= 0 && pos._col<10&&pos._row<10&&\
+			pos._row >= 0 && _maze[pos._row][pos._col] == 0)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	//普通方法寻找通路
+	bool GetPath(Pos entry)
+	{
+		stack<Pos> s;
+		s.push(entry);
+		Pos cur = entry;
+		Pos next = entry;
+		while (!s.empty())
+		{
+	
+			if (cur._row == M-1)
+			{
+				_maze[cur._row][cur._col] = 2;
+				printf("找到出口：[%d , %d]\n",cur._row, cur._col);
+				//return true;
+			}
+
+			//上
+			next = cur;
+			next._row = cur._row - 1;
+			if (CheckIsAccess(next))
+			{
+				_maze[cur._row][cur._col] = 2;
+				s.push(cur);
+				cur._row = next._row;
+				continue;
+			}
+			
+			//右
+			next = cur;
+			next._col = cur._col + 1;
+			if (CheckIsAccess(next))
+			{
+				_maze[cur._row][cur._col] = 2;
+				s.push(cur);
+				cur._col = next._col;
+				continue;
+			}
+
+			//下
+			next = cur;
+			next._row = cur._row + 1;
+			if (CheckIsAccess(next))
+			{
+				_maze[cur._row][cur._col] = 2;
+				s.push(cur);
+				cur._row = next._row;
+				continue;
+			}
+
+			//左
+			next = cur;
+			next._col = cur._col - 1;
+			if (CheckIsAccess(next))
+			{
+				_maze[cur._row][cur._col] = 2;
+				s.push(cur);
+				cur._col= next._col;
+				continue;
+			}
+
+
+			_maze[cur._row][cur._col] = 3;
+			cur = s.top();
+			s.pop();
+		}
+		return false;
+	}
+
+	//递归方法寻找通路
+	bool GetPath_R(Pos entry)
+	{
+		Pos cur = entry;
+		Pos next = cur;
+
+		if (cur._row == M-1)
+		{
+			_maze[cur._row][cur._col] = 2;
+			printf("找到出口：[%d , %d]\n", cur._row, cur._col);
+			return true;
+		}
+
+		//上
+		next = cur;
+		next._row = cur._row - 1;
+		if (CheckIsAccess(next))
+		{
+			_maze[cur._row][cur._col] = 2;
+			if (GetPath_R(next))
+				return true;
+		}
+
+		//右
+		next = cur;
+		next._col = cur._col + 1;
+		if (CheckIsAccess(next))
+		{
+			_maze[cur._row][cur._col] = 2;
+			if (GetPath_R(next))
+				return true;
+		}
+
+		//下
+		next = cur;
+		next._row = cur._row + 1;
+		if (CheckIsAccess(next))
+		{
+			_maze[cur._row][cur._col] = 2;
+			if (GetPath_R(next))
+				return true;
+		}
+
+		//左
+		next = cur;
+		next._col = cur._col - 1;
+		if (CheckIsAccess(next))
+		{
+			_maze[cur._row][cur._col] = 2;
+			if (GetPath_R(next))
+				return true;
+		}
+
+		_maze[cur._row][cur._col] = 3;
+		return false;
+	}
+
+	//解决带环的试探下一个节点
+	bool CheckIsAccess(Pos cur, Pos next)
+	{
+		if (next._col<N&&next._col>0 && next._row<M&&next._row>0\
+			&& (_maze[next._row][next._col] == 0 || _maze[next._row][next._col] > _maze[cur._row][cur._col]))
+		{
+			return true;
+		}
+		return false;
+	}
+	//用栈寻找最短通路
+	void StackGetShortPath(Pos entry, stack<Pos>& s, list<Pos>& shortpath)
+	{
+		s.push(entry);
+		Pos cur = entry;
+		Pos next = entry;
+		while (!s.empty())
+		{
+			//进入入口开始试探下一个节点，若可以进入下一个节点，这说明没有到死胡同也没有到出口
+			//上
+			next = cur;
+			next._row = cur._row - 1;
+			if (CheckIsAccess(next))
+			{
+				_maze[cur._row][cur._col] = 2;
+				s.push(cur);
+				cur._row = next._row;
+				continue;
+			}
+
+			//右
+			next = cur;
+			next._col = cur._col + 1;
+			if (CheckIsAccess(next))
+			{
+				_maze[cur._row][cur._col] = 2;
+				s.push(cur);
+				cur._col = next._col;
+				continue;
+			}
+
+			//下
+			next = cur;
+			next._row = cur._row + 1;
+			if (CheckIsAccess(next))
+			{
+				_maze[cur._row][cur._col] = 2;
+				s.push(cur);
+				cur._row = next._row;
+				continue;
+			}
+
+			//左
+			next = cur;
+			next._col = cur._col - 1;
+			if (CheckIsAccess(next))
+			{
+				_maze[cur._row][cur._col] = 2;
+				s.push(cur);
+				cur._col = next._col;
+				continue;
+			}
+
+			//上下左右都试探完，判断是否走到出口
+			if (cur._row == M - 1 || cur._row == 0)
+			{
+				_maze[cur._row][cur._col] = 2;
+				if (shortpath.empty() || s.size()< shortpath.size())
+				{
+					shortpath.clear();
+					stack<Pos> tmp(s);
+					while (!tmp.empty())
+					{
+						shortpath.push_front(tmp.top());
+						tmp.pop();
+					}
+				}
+			}
+			//走到这说明走到死胡同，则进行回溯。
+			_maze[cur._row][cur._col] = 3;
+			cur = s.top();
+			s.pop();
+		}
+	}
+
+	//带环迷宫
+	void GetShortPath(Pos entry, stack<Pos>& path, list<Pos>& shortpath)
+	{
+		Pos cur = entry;
+		Pos next = cur;
+		path.push(cur);
+
+		//上
+		next = cur;
+		next._row -= 1;
+		if (CheckIsAccess(cur, next))
+		{
+			_maze[next._row][next._col] = _maze[cur._row][cur._col] + 1;
+
+			GetShortPath(next, path, shortpath);
+		}
+
+		//右
+		next = cur;
+		next._col += 1;
+		if (CheckIsAccess(cur, next))
+		{
+			_maze[next._row][next._col] = _maze[cur._row][cur._col] + 1;
+			GetShortPath(next, path, shortpath);
+		}		
+		//下
+		next = cur;
+		next._row += 1;
+		if (CheckIsAccess(cur, next))
+		{
+			_maze[next._row][next._col] = _maze[cur._row][cur._col] + 1;
+			GetShortPath(next, path, shortpath);
+		}		
+		//左
+		next = cur;
+		next._col -= 1;
+		if (CheckIsAccess(cur, next))
+		{
+			_maze[next._row][next._col] = _maze[cur._row][cur._col] + 1;
+			GetShortPath(next, path, shortpath);
+		}
+
+		if (cur._row == M - 1||cur._row == 0)
+		{
+			if (shortpath.empty() || path.size()< shortpath.size())
+			{
+				shortpath.clear();
+				stack<Pos> tmp(path);
+				while (!tmp.empty())
+				{
+					shortpath.push_front(tmp.top());
+					tmp.pop();
+				}
+			}
+		}
+
+		path.pop();
+
+	}
+protected:
+	int _maze[M][N];
+};
+

@@ -1,0 +1,81 @@
+#include"Maze.h"
+
+const size_t N = 10;
+
+void TestMaze()
+{
+	// 如何动态开辟M*N二维数组？ 
+	//int maze[10][10] =
+	//{
+	//	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+	//	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+	//	{ 0, 0, 0, 1, 1, 1, 1, 1, 1, 1 },
+	//	{ 1, 1, 0, 1, 1, 1, 1, 1, 1, 1 },
+	//	{ 1, 1, 0, 0, 0, 0, 1, 1, 1, 1 },
+	//	{ 1, 1, 0, 1, 1, 0, 1, 1, 1, 1 },
+	//	{ 1, 1, 0, 1, 1, 0, 1, 1, 1, 1 },
+	//	{ 1, 1, 0, 1, 1, 0, 1, 1, 1, 1 },
+	//	{ 1, 1, 0, 1, 1, 0, 1, 1, 1, 1 },
+	//	{ 1, 1, 0, 1, 1, 0, 1, 1, 1, 1 }
+	//};
+
+	int maze[10][10] =
+	{
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+		{ 2, 0, 0, 0, 0, 0, 0, 1, 1, 1 },
+		{ 1, 1, 0, 1, 1, 1, 0, 1, 1, 1 },
+		{ 1, 1, 0, 0, 0, 0, 0, 1, 1, 1 },
+		{ 1, 1, 1, 1, 1, 0, 1, 1, 1, 1 },
+		{ 1, 1, 1, 1, 1, 0, 1, 1, 1, 1 },
+		{ 1, 1, 1, 1, 1, 0, 1, 1, 1, 1 },
+		{ 1, 1, 1, 1, 1, 0, 1, 1, 1, 1 },
+		{ 1, 1, 1, 1, 1, 0, 1, 1, 1, 1 }
+	};
+
+	Maze<10, 10> mz((int*)maze);
+	mz.Print();
+
+	Pos Entry = { 2, 0 };
+	//带环迷宫
+
+	stack<Pos> Path;
+	list<Pos> ShotPath;
+	mz.GetShortPath(Entry, Path, ShotPath);
+	mz.Print();
+	list<Pos>::iterator it = ShotPath.begin();
+	cout << "最短通路：";
+	while (it != ShotPath.end())
+	{
+		printf("[%d, %d]->", it->_row, it->_col);
+		++it;
+	}
+	cout << "出口" << endl;
+	//寻找最短路径
+	/*stack<Pos> Path;
+	list<Pos> ShotPath;
+	mz.StackGetShortPath(Entry, Path, ShotPath);
+	mz.Print();
+	list<Pos>::iterator it = ShotPath.begin();
+	cout << "最短通路：";
+	while (it != ShotPath.end())
+	{
+		printf("[%d, %d]->", it->_row, it->_col);
+		++it;
+	}
+	cout << "出口" << endl;*/
+
+	//非递归寻找迷宫通路
+	//if (!mz.GetPath(Entry))
+	//{
+	//	cout << "没找到出口" << endl;
+	//}
+	//mz.Print();
+
+	//递归寻找迷宫通路
+	//if (!mz.GetPath_R(Entry))
+	//{
+	//	cout << "没找到出口" << endl;
+	//}
+	//mz.Print();
+}
