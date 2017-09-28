@@ -30,12 +30,13 @@ struct Cell
 class Calculator
 {
 public:
-	Calculator(const vector<Cell>& exp)
-		:_exp(exp)
+	Calculator(const vector<int>& exp)
+		:_infix(exp)
 	{
 	}
 	int Count()
 	{
+		Transition();
 		stack<int> num;
 		int n = _exp.size();
 		for (int i = 0; i < n;i++)
@@ -71,22 +72,105 @@ public:
 		}
 		return num.top();
 	}
+protected:
+	//判断是否为操作符
+	bool IsTypeid(char op)
+	{
+		switch (op)
+		{
+		case '-':
+		case '+':
+		case '*':
+		case '/':
+			return true;
+		default:
+			return false;
+			break;
+		}
+
+	}
+	//确定操作符的优先级
+	int Priority(char op)
+	{
+		switch (op)
+		{
+		case '-':
+		case '+':
+			return 1;
+
+		case '*':
+		case '/':
+			return 2;
+
+		default:
+			break;
+		}
+	}
+	//中缀转后缀
+	void Transition()
+	{
+		stack<int> tmp;
+		int n = _infix.size();
+		for (int i = 0; i < n; i++)//1
+		{
+			if ((_infix[i] + 48) >= '0' && (_infix[i] + 48) <= '9' || _infix[i] == '.')//2
+			{
+				_exp.push_back(Cell({ OP_NUM, _infix[i] }));
+			}
+			else if (_infix[i] == '(')  //i
+			{
+				tmp.push(_infix[i]);
+			}
+			else if (_infix[i] == ')') //ii
+			{
+				while (tmp.top() != '(')
+				{
+					_exp.push_back(Cell({ OP_SYMBOL, tmp.top() }));
+					tmp.pop();
+				}
+				tmp.pop();
+			}
+			else if (IsTypeid(_infix[i]))  //iii
+			{
+				if (tmp.empty() || Priority(_infix[i]) > Priority(tmp.top())) //(1)
+				{
+					tmp.push(_infix[i]);
+				}
+				else
+				{
+					while (!tmp.empty() && Priority(_infix[i]) <= Priority(tmp.top())) //(2)
+					{
+						_exp.push_back(Cell({ OP_SYMBOL, tmp.top() }));
+						tmp.pop();
+					}
+					tmp.push(_infix[i]);
+				}
+			}
+			else
+			{
+				cout << "输入有误" << endl;
+				_exp.clear();
+				return;
+			}
+		}
+		while (!tmp.empty())
+		{
+			_exp.push_back(Cell({ OP_SYMBOL, tmp.top() }));
+			tmp.pop();
+		}
+	}
+
 
 protected:
+	vector<int> _infix; //中缀
 	vector<Cell> _exp; // 表达式 
 };
+
 
 int TestCalculator() 
 { 
  
-	vector<Cell> exp; 
-	exp.push_back(Cell({ OP_NUM, 2 }));
-	exp.push_back(Cell({ OP_NUM, 3 }));
-	exp.push_back(Cell({ OP_NUM, 4 }));
-	exp.push_back(Cell({ OP_SYMBOL, '*' }));
-	exp.push_back(Cell({ OP_SYMBOL, '-' }));
-	exp.push_back(Cell({ OP_NUM, 5 }));
-	exp.push_back(Cell({ OP_SYMBOL, '+' }));
+	vector<int> exp = { 2, '-', 3, '*', 4, '+', 5 };
  
 	Calculator cal(exp);
 	int n = cal.Count();
