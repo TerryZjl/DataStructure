@@ -1,0 +1,96 @@
+#ifndef _CAL_H_
+#define _CAL_H_
+
+#include<iostream>
+#include<vector>
+#include<stack>
+#include<string>
+using namespace std;
+
+
+
+// 判断是操作符还是操作数
+enum Cal_Type
+{
+	OP_NUM,
+	OP_SYMBOL,
+};
+
+struct Cell
+{
+	Cal_Type _type; // 计算类型 
+	int _value; // 值 
+	struct Cell(const Cal_Type& t, const int& x)
+		:_type(t)
+		, _value(x)
+	{ 
+	};
+};
+
+class Calculator
+{
+public:
+	Calculator(const vector<Cell>& exp)
+		:_exp(exp)
+	{
+	}
+	int Count()
+	{
+		stack<int> num;
+		int n = _exp.size();
+		for (int i = 0; i < n;i++)
+		{			
+			Cell cur = _exp[i];
+			if (cur._type == OP_NUM)
+			{
+				num.push(cur._value);
+			}
+			else if (cur._type == OP_SYMBOL)
+			{
+			    int data1 = num.top();
+			    num.pop();
+			    int data2 = num.top();
+			    num.pop();
+			    int sum = 0;
+			    
+			    switch (cur._value)
+			    {
+			    case '+':{ sum = data1+data2;}
+			      break;
+			    case '*':{ sum = data1*data2; }
+			      break;
+			    case '-':{ sum = data2 - data1;}
+			      break;
+			    case '/':{ sum = data2 / data1; }
+			      break;
+			    default:
+			      break;
+			    }
+			    num.push(sum);
+			}
+		}
+		return num.top();
+	}
+
+protected:
+	vector<Cell> _exp; // 表达式 
+};
+
+int TestCalculator() 
+{ 
+ 
+	vector<Cell> exp; 
+	exp.push_back(Cell({ OP_NUM, 2 }));
+	exp.push_back(Cell({ OP_NUM, 3 }));
+	exp.push_back(Cell({ OP_NUM, 4 }));
+	exp.push_back(Cell({ OP_SYMBOL, '*' }));
+	exp.push_back(Cell({ OP_SYMBOL, '-' }));
+	exp.push_back(Cell({ OP_NUM, 5 }));
+	exp.push_back(Cell({ OP_SYMBOL, '+' }));
+ 
+	Calculator cal(exp);
+	int n = cal.Count();
+	cout << "计算结果:" << n << endl;
+	return 0; 
+} 
+#endif
