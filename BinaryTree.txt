@@ -1,0 +1,237 @@
+#ifndef _BINTREE_
+#define _BINTREE_
+
+#include<iostream>
+#include<queue>
+using namespace std;
+
+
+template <class T>
+struct BinaryTreeNode
+{
+	BinaryTreeNode* _left;
+	BinaryTreeNode* _right;
+	T _data;
+	BinaryTreeNode(const T& x)
+		:_left(NULL)
+		, _right(NULL)
+		, _data(x)
+	{
+	};
+};
+
+template<class T>
+class BinaryTree
+{
+	typedef BinaryTreeNode<T> Node;
+public:
+	BinaryTree()
+		:_root(NULL)
+	{}
+	BinaryTree(const T* a, size_t size, const T& invalid)
+	{
+		size_t i = 0;
+		_root = _CreateTree(a, size, invalid, i);
+	}
+	BinaryTree(const BinaryTree& t)
+	{
+		Node* root = t._root;
+		_root = _CopyBinaryTree(root);
+	}
+	BinaryTree& operator=(const BinaryTree& t)
+	{
+		Node* root = t._root;
+		_root = _CopyBinaryTree(root);
+		return *this;
+	}
+
+	~BinaryTree()
+	{
+		Clear(_root);
+	}
+
+	void PrevOrder()
+	{
+		_PrevOrder(_root);
+		cout << endl;
+	}
+	void InOrder()
+	{
+		_InOrder(_root);
+		cout << endl;
+	}
+	void PostOrder()
+	{
+		_PostOrder(_root);
+		cout << endl;
+	}
+	void LevelOrder()
+	{
+		if (_root == NULL)
+			return;
+		queue<Node*> q;
+		q.push(_root);
+
+		while (!q.empty())
+		{
+			Node* tmp = q.front();
+			cout << tmp->_data << " ";
+			if (tmp->_left != NULL)
+				q.push(tmp->_left);
+			if (tmp->_right != NULL)
+				q.push(tmp->_right);
+			q.pop();
+		}
+		cout << endl;
+	}
+	void PrevOrder_NonR();
+	void InOrder_NonR();
+	void PostOrder_NonR();
+
+	//求结点的个数
+	size_t Size()
+	{
+		return _Size(_root);
+	}
+	//求树的深度
+	size_t Depth()
+	{
+		return _Depth(_root);
+	}
+	//叶子结点的个数
+	size_t LeafSize()
+	{
+		return _LeafSize(_root);
+	}
+	//求第K层结点的个数
+	size_t GetKLevel(size_t k)
+	{
+		return GetKLevel(_root, k);
+	}
+
+protected:
+	T GetKLevel(Node* root, size_t k)
+	{
+		if (root == NULL)
+			return 0;
+		if ( k == 1)
+			return 1;
+
+		T left = GetKLevel(root->_left, k - 1);
+		T right = GetKLevel(root->_right, k - 1);
+		return left + right;
+	
+	}
+	T _LeafSize(Node* root)
+	{
+		if (root == NULL)
+			return 0;
+		if (root->_left == NULL&&root->_right == NULL)
+			return 1;
+		return _LeafSize(root->_left) + _LeafSize(root->_right);
+	}
+	T _Depth(Node* root)
+	{
+		if (root == NULL)
+			return NULL;
+		if (root->_left == NULL&&root->_right == NULL)
+			return 1;
+		T left = _Depth(root->_left);
+		T right = _Depth(root->_right);
+		return left > right ? left+1 : right+1;
+	}
+	T _Size(Node* root)
+	{
+		if (root == NULL)
+			return 0;
+		
+		if (root->_left == NULL&&root->_right == NULL)
+			return 1;
+
+		T left = _Size(root->_left);
+		T right = _Size(root->_right);
+		return left + right+1;
+	}
+
+	void Clear(Node*& root)
+	{
+		if (root == NULL)
+			return;
+		Clear(root->_left);
+		Clear(root->_right);
+		delete root;
+		root = NULL;
+	}
+	void _InOrder(Node* root)
+	{
+		if (root == NULL)
+			return;
+		_InOrder(root->_left);
+		cout << root->_data << " ";
+		_InOrder(root->_right);
+	}
+	void _PostOrder(Node* root)
+	{
+		if (root == NULL)
+			return;
+		_PostOrder(root->_left);
+		_PostOrder(root->_right);
+		cout << root->_data << " ";
+	}
+
+	void _PrevOrder(Node* root)
+	{
+		if (root == NULL)
+			return;
+		cout << root->_data << " ";
+		_PrevOrder(root->_left);	
+		_PrevOrder(root->_right);
+	}
+	Node* _CopyBinaryTree(Node* root)
+	{
+		Node* NewRoot = NULL;
+		if (root != NULL)
+		{
+			NewRoot = new Node(root->_data);
+			NewRoot->_left = _CopyBinaryTree(root->_left);
+			NewRoot->_right = _CopyBinaryTree(root->_right);
+			return NewRoot;
+		}
+		return NULL;
+	}
+	Node* _CreateTree(const T* a, size_t size, const T& invalid, size_t& i)
+	{
+		Node* root = NULL;
+		if (i < size&&a[i] != invalid)
+		{
+			root = new Node(a[i]);
+			root->_left = _CreateTree(a, size, invalid, ++i);
+			root->_right = _CreateTree(a, size, invalid, ++i);
+			return root;
+		}
+		return NULL;
+	}
+	
+protected:
+	Node* _root;
+};
+
+void Test1()
+{
+	int a1[10] = { 1, 2, 3, '#', '#', 4, '#', '#', 5, 6 };
+	//int a2[15] = {1,2,'#',3,'#','#',4,5,'#',6,'#',7,'#','#',8}; 
+	BinaryTree<int> tree1(a1, 10, '#');
+
+	tree1.PrevOrder();
+	tree1.InOrder();
+	tree1.PostOrder();
+	tree1.LevelOrder();
+
+	cout << "Size: " << tree1.Size() << endl;
+	cout << "Depth: " << tree1.Depth() << endl;
+	cout << "LeafSize: " << tree1.LeafSize() << endl;
+	cout << "GetKLevel: " << tree1.GetKLevel(1)<< endl;
+
+}
+
+#endif
