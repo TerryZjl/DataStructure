@@ -1,0 +1,86 @@
+#ifndef _AUTO_H_
+#define _AUTO_H_
+
+#include<iostream>
+using namespace std;
+
+template<class T>
+class AutoPtr
+{
+public:
+	AutoPtr(T* ptr = NULL)
+		:_ptr(ptr)
+	{}
+	AutoPtr(AutoPtr<T>& A)
+	{
+		_ptr = A._ptr;
+		A._ptr = NULL;
+	}
+	AutoPtr<T> operator=(AutoPtr<T>& A)
+	{
+		if (this != &A)
+		{
+			delete _ptr;
+			_ptr = A._ptr;
+			A._ptr = NULL;
+		}
+		return *this;
+	}
+	T& operator*()
+	{
+		return *_ptr;
+	}
+	T* operator->()
+	{
+		return &*_ptr;
+	}
+	~AutoPtr()
+	{
+		cout << "释放内存" << endl;
+		delete _ptr;
+	}
+protected:
+	T* _ptr;
+};
+
+
+struct AA
+{
+	int _a;
+	int _b;
+};
+
+//bool func()
+//{
+//	return false;
+//}
+void TestAutoPtr()
+{
+
+	AutoPtr<int> p1(new int(10));
+	AutoPtr<int> p3(p1);
+	AutoPtr<int> p4;
+	AutoPtr<int> p5;
+	(p5 = (p4 = p3));
+	cout << *p5 << endl;
+	AutoPtr<AA> p2(new AA);
+	p2->_a = 20;
+	p2->_b = 30;
+	
+
+	//下面这种情况由于忘记释放动态申请的内存就会造成内存泄漏，这是因为执行流乱跳造成的结果，造成执行流乱跳的有break，return，goto，抛异常
+	//char* p = NULL;
+	//while (1)
+	//{
+	//	p = new char[1024 * 1024 * 1024];
+
+	//	if (!func())
+	//	{
+	//		continue;
+	//	}
+
+	//	delete p;
+	//}
+
+}
+#endif
