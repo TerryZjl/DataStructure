@@ -3,6 +3,7 @@
 
 #include<iostream>
 #include<queue>
+#include<stack>
 using namespace std;
 
 
@@ -33,15 +34,19 @@ public:
 		size_t i = 0;
 		_root = _CreateTree(a, size, invalid, i);
 	}
-	BinaryTree(const BinaryTree& t)
+	BinaryTree(const BinaryTree<T>& t)
 	{
 		Node* root = t._root;
 		_root = _CopyBinaryTree(root);
 	}
-	BinaryTree& operator=(const BinaryTree& t)
+	BinaryTree<T>& operator=(const BinaryTree<T>& t)
 	{
-		Node* root = t._root;
-		_root = _CopyBinaryTree(root);
+		if (this != &t)
+		{
+			Node* root = t._root;
+			Clear(_root);
+			_root = _CopyBinaryTree(root);
+		}
 		return *this;
 	}
 
@@ -84,9 +89,70 @@ public:
 		}
 		cout << endl;
 	}
-	void PrevOrder_NonR();
-	void InOrder_NonR();
-	void PostOrder_NonR();
+	void PrevOrder_NonR()
+	{
+		Node* cur = _root;
+		stack<Node*>  s;
+		while (!s.empty() || cur)
+		{
+			while (cur)
+			{
+				cout << cur->_data << " ";
+				s.push(cur);
+				cur = cur->_left;
+			}
+			Node* top = s.top();
+			cur = top->_right;
+			s.pop();
+		}
+		cout << endl;
+	}
+	void InOrder_NonR()
+	{
+		Node* cur = _root;
+		stack<Node*> s;
+		while (!s.empty() || cur)
+		{
+			while (cur)
+			{
+				s.push(cur);
+				cur = cur->_left;
+			}
+			Node* top = s.top();
+			cout << top->_data << " ";
+			cur = top->_right;
+			s.pop();
+		}
+		cout << endl;
+	}
+
+	void PostOrder_NonR()
+	{
+		Node* cur = _root;
+		Node* prev = NULL;
+		stack<Node*> s;
+
+		while (!s.empty() || cur)
+		{
+			while (cur)
+			{
+				s.push(cur);
+				cur = cur->_left;
+			}
+			Node* top = s.top();
+			if (top->_right == NULL || prev == top->_right)
+			{
+				cout << top->_data << " ";
+				s.pop();
+				prev = top;
+			}
+			else
+			{
+				cur = top->_right;
+			}
+		}
+		cout << endl;
+	}
 
 	//求结点的个数
 	size_t Size()
@@ -108,8 +174,24 @@ public:
 	{
 		return GetKLevel(_root, k);
 	}
-
+	Node* Find(const T& x)
+	{
+		return _Find(_root, x);
+	}
 protected:
+	Node* _Find(Node* root, const T& x)
+	{
+		if (root == NULL)
+			return NULL;
+		if (root->_data == x)
+			return root;
+		Node* val = NULL;
+		val = _Find(root->_left, x);
+		if (val != NULL)
+			return val;
+		return _Find(root->_right, x);
+	}
+
 	T GetKLevel(Node* root, size_t k)
 	{
 		if (root == NULL)
@@ -221,17 +303,24 @@ void Test1()
 	int a1[10] = { 1, 2, 3, '#', '#', 4, '#', '#', 5, 6 };
 	//int a2[15] = {1,2,'#',3,'#','#',4,5,'#',6,'#',7,'#','#',8}; 
 	BinaryTree<int> tree1(a1, 10, '#');
+	BinaryTree<int> tree2;
+	tree2 = tree1;
 
 	tree1.PrevOrder();
+	tree1.PrevOrder_NonR();
 	tree1.InOrder();
+	tree1.InOrder_NonR();
 	tree1.PostOrder();
+	tree1.PostOrder_NonR();
 	tree1.LevelOrder();
+
+
 
 	cout << "Size: " << tree1.Size() << endl;
 	cout << "Depth: " << tree1.Depth() << endl;
 	cout << "LeafSize: " << tree1.LeafSize() << endl;
 	cout << "GetKLevel: " << tree1.GetKLevel(1)<< endl;
-
+	cout << "Find: " << tree1.Find(5)->_data << endl;
 }
 
 #endif
