@@ -1,0 +1,45 @@
+#ifndef _SCOPED_
+#define _SCOPED_
+
+#include<iostream>
+using namespace std;
+
+template<class T>
+class ScopedPtr
+{
+public:
+	ScopedPtr(T* ptr)
+		:_ptr(ptr)
+	{}
+
+	T& operator*()
+	{
+		return *_ptr;
+	}
+	T* operator->()
+	{
+		return &*_ptr;
+	}
+	~ScopedPtr()
+	{
+		cout << "ÊÍ·ÅÄÚ´æ" << endl;
+		delete _ptr;
+	}
+private:
+	ScopedPtr(ScopedPtr<T>& p);
+	ScopedPtr<T>& operator=(ScopedPtr<T>& p);
+private:
+	T* _ptr;
+};
+
+
+void TestScopedPtr()
+{
+	ScopedPtr<int> p1(new int(10));
+	//ScopedPtr<int> p2(p1);
+	//ScopedPtr<int> p2 = p1;
+	
+	cout << *p1 << endl;
+
+}
+#endif
