@@ -1,0 +1,186 @@
+#ifndef _BINTREETHD_
+#define _BINTREETHD_
+
+#include<iostream>
+#include<stack>
+using namespace std;
+
+enum ISTHD
+{
+	THREAD,
+	LINK
+};
+
+template<class T>
+struct BinaryTreeThdNode
+{
+	T _data;
+	BinaryTreeThdNode<T>* _left;
+	BinaryTreeThdNode<T>* _right;
+	ISTHD  _LeftThd;
+	ISTHD  _RightThd; 
+	BinaryTreeThdNode(const T& x)
+		:_data(x)
+		, _left(NULL)
+		, _right(NULL)
+		, _LeftThd(LINK)
+		, _RightThd(LINK)
+	{}
+};
+
+
+template<class T>
+struct Iterator
+{
+	typedef BinaryTreeThdNode<T> Node;
+	Node* _it;
+	typedef Iterator<T> Self;
+
+	Iterator()
+		:_it(NULL)
+	{}
+	Iterator(Node* it)
+		:_it(it)
+	{}
+	Iterator(const Iterator<T>& It)
+	{
+		_it = It._it;
+	}
+
+	T& operator*()
+	{
+		return _it->_data;
+	}
+	bool operator!=(const Iterator<T>& It)
+	{
+		if (_it != It._it)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	Iterator<T>& operator++()
+	{
+		if (_it != NULL)
+		{
+			if (_it->_RightThd == THREAD)
+			{
+				_it = _it->_right;
+			}
+			else
+			{
+				_it = _it->_right;
+				while (_it->_LeftThd != THREAD)
+				{
+					_it = _it->_left;
+				}
+			}
+		}
+		return *this;
+	}
+};
+template<class T>
+class BinaryTreeThd
+{
+	typedef BinaryTreeThdNode<T> Node;
+public:
+	typedef Iterator<T> Iterator;
+	BinaryTreeThd(T* a, size_t n, const T& invalid)
+	{
+		size_t index = 0;
+		_root = _CreateTree(a, n, invalid, index);
+	}
+	void InOrderThd()
+	{
+		stack<Node*> s;
+		Node* cur = _root;
+		Node* prev = NULL;
+		while (!s.empty() || cur)
+		{
+			while (cur)
+			{
+				s.push(cur);
+				cur = cur->_left;
+			}
+
+			Node* top = s.top();
+			if (top->_left == NULL)
+			{
+				top->_left = prev;
+				top->_LeftThd = THREAD;
+			}
+			if (prev&&prev->_right == NULL)
+			{
+				prev->_right = top;
+				prev->_RightThd = THREAD;
+			}
+			prev = top;
+			cur = top->_right;
+			s.pop();
+		}
+		//prev->_right = NULL;
+		prev->_RightThd = THREAD;
+	}
+	void InOrder()
+	{
+		_InOrder(_root);
+		cout << endl;
+	}
+	Iterator Begin()
+	{
+		Node* cur = _root;
+		while (cur->_left)
+		{
+			cur = cur->_left;
+		}
+		return cur;
+	}
+
+	Iterator End()
+	{
+		return NULL;
+	}
+private:
+	void _InOrder(Node* root)
+	{
+		if (root == NULL)
+			return;
+		_InOrder(root->_left);
+		cout << root->_data << " ";
+		_InOrder(root->_right);
+	}
+	Node* _CreateTree(T* a, size_t n, const T& invalid, size_t& index)
+	{
+		Node* NewNode = NULL;
+		if (index<n&&a[index]!=invalid)
+		{
+			NewNode = new Node(a[index]);
+			NewNode->_left = _CreateTree(a, n, invalid, ++index);
+			NewNode->_right = _CreateTree(a, n, invalid, ++index);
+		}
+		return NewNode;
+	}
+private: 
+	Node* _root;
+};
+
+void TestBinaryTreeThd()
+{
+	int a[10] = { 1, 2, 3, '#', '#', 4, '#', '#', 5, 6 };
+	BinaryTreeThd<int> t1(a,10,'#');
+	t1.InOrder();
+	t1.InOrderThd();
+	
+	BinaryTreeThd<int>::Iterator it = t1.Begin();
+	while (t1.End() != it)
+	{
+		cout << *it << " ";
+		++it;
+	}
+	cout << endl;
+}
+
+#endif
