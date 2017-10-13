@@ -1,0 +1,114 @@
+#ifndef _SHARED_
+#define _SHARED_
+
+#include<iostream>
+using namespace std;
+
+
+struct Del
+{
+	template<class D>
+	void operator()(D* ptr)
+	{
+		printf("delete 0x%x\n", ptr);
+		delete ptr;
+	}
+};
+struct DelArray
+{
+	template<class D>
+	void operator()(D* ptr)
+	{
+		printf("delete[] 0x%x\n", ptr);
+		delete[] ptr;
+	}
+};
+
+template<class T,class D = Del>
+class SharedPtr
+{
+public:
+	SharedPtr(T* ptr = NULL,D del = Del())
+		:_ptr(ptr)
+		, _CountPtr(new int(1))
+		,_del(del)
+	{}
+
+	SharedPtr(const SharedPtr<T,D>& sp)
+	{
+		_ptr = sp._ptr;
+		_del = sp._del;
+		_CountPtr = sp._CountPtr;
+		++(*_CountPtr);
+	}
+	//T& operator=(const T& x)
+	//{
+	//	if ((*_ptr) != x)
+	//	{
+	//		*_ptr = x;
+	//	}
+	//	return *_ptr;
+	//}
+	SharedPtr<T,D>& operator=(const SharedPtr<T,D>& sp)
+	{
+		if (this != &sp)
+		{
+			if (--(*_CountPtr) == 0)
+			{
+				_del(_ptr);
+				delete _CountPtr;
+			}
+			_ptr = sp._ptr;
+			_del = sp._del;
+			_CountPtr = sp._CountPtr;
+			++(*_CountPtr);
+		}
+		return *this;
+	}
+
+	T& operator*()
+	{
+		return *_ptr;
+	}
+	T* operator->()
+	{
+		return _ptr;
+	}
+	~SharedPtr()
+	{
+		if (--(*_CountPtr) == 0)
+		{
+			//printf("delete 0x%x\n", _ptr);
+			//delete _ptr;
+			_del(_ptr);
+			delete _CountPtr;
+		}
+	}
+private:
+	T* _ptr;
+	int* _CountPtr;
+	D _del;
+};
+
+
+
+void TestSharedPtr()
+{
+	SharedPtr<int,DelArray> p1(new int[10], DelArray());
+
+
+	/*SharedPtr<int> p2(p1);
+	if (1)
+	{
+		SharedPtr<int> p3(p2);
+	}
+	cout << *p1 << endl;
+	*p2 = 40;
+	*p1 = 30;
+	cout << *p1 << endl;
+	cout << *p2 << endl;
+*/
+
+}
+
+#endif
