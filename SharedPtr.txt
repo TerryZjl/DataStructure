@@ -27,7 +27,9 @@ struct DelArray
 template<class T,class D = Del>
 class SharedPtr
 {
+	template<class T, class D =Del> friend class WeakPtr;
 public:
+
 	SharedPtr(T* ptr = NULL,D del = Del())
 		:_ptr(ptr)
 		, _CountPtr(new int(1))
@@ -90,25 +92,76 @@ private:
 	D _del;
 };
 
-
+template<class T,class D = Del>
+class WeakPtr
+{
+public:
+	WeakPtr()
+		:_ptr(NULL)
+		, _del(D())
+	{}
+	WeakPtr(const SharedPtr<T, D>& sp)
+	{
+		_ptr = sp._ptr;
+		_del = sp._del;
+	}
+	WeakPtr<T,D>& operator=(const SharedPtr<T, D>& sp)
+	{
+		if (_ptr)
+		{
+			_del(_ptr);
+		}
+		this->_ptr = sp._ptr;
+		this->_del = sp._del;
+		return *this;
+	}
+	T& operator*()
+	{
+		return *_ptr;
+	}
+	T* operator->()
+	{
+		return _ptr;
+	}
+	//~WeakPtr()
+	//{
+	//	cout << "delete weak" << endl;
+	//	_del(_ptr);
+	//}
+private:
+	T* _ptr;
+	D _del;
+};
+struct ListNode
+{
+	WeakPtr<ListNode> _next;
+	WeakPtr<ListNode> _prev;
+};
 
 void TestSharedPtr()
 {
-	SharedPtr<int,DelArray> p1(new int[10], DelArray());
+	SharedPtr<ListNode> cur(new ListNode);
+	SharedPtr<ListNode> next(new ListNode);
+	//cur->_next = next;
+	//next->_prev = cur;
 
 
-	/*SharedPtr<int> p2(p1);
-	if (1)
-	{
-		SharedPtr<int> p3(p2);
-	}
-	cout << *p1 << endl;
-	*p2 = 40;
-	*p1 = 30;
-	cout << *p1 << endl;
-	cout << *p2 << endl;
-*/
 
+	//SharedPtr<int, DelArray> p1(new int[10], DelArray());
+	//SharedPtr<int> p2(p1);
+	//if (1)
+	//{
+	//	SharedPtr<int> p3(p2);
+	//}
+	//cout << *p1 << endl;
+	//*p2 = 40;
+	//*p1 = 30;
+	//cout << *p1 << endl;
+	//cout << *p2 << endl;
+	
 }
 
+
+//看录屏，再看一下new ListNode
+//看一下如何使用库里的智能指针
 #endif
