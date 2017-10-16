@@ -30,19 +30,19 @@ struct BinaryTreeThdNode
 
 
 template<class T>
-struct InOrderIterator
+struct InIterator
 {
 	typedef BinaryTreeThdNode<T> Node;
 	Node* _it;
-	typedef InOrderIterator<T> Self;
+	typedef InIterator<T> Self;
 
-	Iterator()
+	InIterator()
 		:_it(NULL)
 	{}
-	Iterator(Node* it)
+	InIterator(Node* it)
 		:_it(it)
 	{}
-	Iterator(const Self& It)
+	InIterator(const Self& It)
 	{
 		_it = It._it;
 	}
@@ -136,99 +136,38 @@ struct  PrevIterator
 	}
 
 };
+
 template<class T>
-class BinaryTreeThdPrev
+class BinaryTreeThd
 {
 	typedef BinaryTreeThdNode<T> Node;
 public:
-	typedef PrevIterator<T> Iterator;
-	BinaryTreeThdPrev(T* a, size_t n, const T& invalid)
+	typedef InIterator<T> InIterator;
+	typedef PrevIterator<T> PrevIterator;
+	BinaryTreeThd(T* a, size_t n,const T& invalid)
 	{
 		size_t index = 0;
 		_root = _CreateTree(a, n, invalid, index);
+	}
+
+	void InOrder()
+	{
+		_InOrder(_root);
+		cout << endl;
 	}
 	void PrevOrder()
 	{
 		_PrevOrder(_root);
 		cout << endl;
 	}
+
+
 	void PrevOrderThd()
 	{
 		Node* Prev = NULL;
-		_PrevOrderThd(_root, Prev); 
+		_PrevOrderThd(_root, Prev);
 		Prev->_right = NULL;
 		Prev->_RightThd = THREAD;
-	}
-
-	Iterator Begin()
-	{
-		return _root;
-	}
-
-	Iterator End()
-	{
-		return NULL;
-	}
-private:
-	void _PrevOrder(Node* root)
-	{
-		if (root == NULL)
-			return;
-		cout << root->_data << " ";
-		_PrevOrder(root->_left);
-		_PrevOrder(root->_right);
-	}
-	void _PrevOrderThd(Node* root, Node*& Prev)
-	{
-		if (root == NULL)
-			return;
-		if (root->_left == NULL)
-		{
-			root->_left = Prev;
-			root->_LeftThd = THREAD;
-		}
-
-		if (Prev&&Prev->_right == NULL)
-		{
-			Prev->_right = root;
-			Prev->_RightThd = THREAD;
-		}
-		Prev = root;
-		if (root->_LeftThd != THREAD)
-			防止在root走到最左节点时，最左节点在上面已经被线索化到父节点，
-			如果不加限制条件root->_left就会走到父节点，造成死循环。
-			_PrevOrderThd(root->_left,Prev);
-		if (root->_RightThd != THREAD)   
-			这里针对上图最后一个节点是倒数第二个节点的父节点的这种情况必须需加上条件，
-			因为走到6时，5的右会被线索化到6上，当把6的左右递归完后，返回到5递归5的右时，如果不加条件，就会继续进入到6，造成死循环。
-			_PrevOrderThd(root->_right,Prev);
-	}
-
-	Node* _CreateTree(T* a, size_t n, const T& invalid, size_t& index)
-	{
-		Node* NewNode = NULL;
-		if (index < n&&a[index] != invalid)
-		{
-			NewNode = new Node(a[index]);
-			NewNode->_left = _CreateTree(a, n, invalid, ++index);
-			NewNode->_right = _CreateTree(a, n, invalid, ++index);
-		}
-		return NewNode;
-	}
-private:
-	Node* _root;
-	
-};
-template<class T>
-class BinaryTreeThd
-{
-	typedef BinaryTreeThdNode<T> Node;
-public:
-	typedef InOrderIterator<T> Iterator;
-	BinaryTreeThd(T* a, size_t n,const T& invalid)
-	{
-		size_t index = 0;
-		_root = _CreateTree(a, n, invalid, index);
 	}
 	void InOrderThd()
 	{
@@ -261,12 +200,7 @@ public:
 		//prev->_right = NULL;
 		prev->_RightThd = THREAD;
 	}
-	void InOrder()
-	{
-		_InOrder(_root);
-		cout << endl;
-	}
-	Iterator Begin()
+	InIterator InBegin()
 	{
 		Node* cur = _root;
 		while (cur->_left)
@@ -276,10 +210,20 @@ public:
 		return cur;
 	}
 
-	Iterator End()
+	InIterator InEnd()
 	{
 		return NULL;
 	}
+	PrevIterator PrevBegin()
+	{
+		return _root;
+	}
+
+	PrevIterator PrevEnd()
+	{
+		return NULL;
+	}
+	
 private:
 	void _InOrder(Node* root)
 	{
@@ -288,6 +232,39 @@ private:
 		_InOrder(root->_left);
 		cout << root->_data << " ";
 		_InOrder(root->_right);
+	}
+	void _PrevOrder(Node* root)
+	{
+		if (root == NULL)
+			return;
+		cout << root->_data << " ";
+		_PrevOrder(root->_left);
+		_PrevOrder(root->_right);
+	}
+	void _PrevOrderThd(Node* root, Node*& Prev)
+	{
+		if (root == NULL)
+			return;
+		if (root->_left == NULL)
+		{
+			root->_left = Prev;
+			root->_LeftThd = THREAD;
+		}
+
+		if (Prev&&Prev->_right == NULL)
+		{
+			Prev->_right = root;
+			Prev->_RightThd = THREAD;
+		}
+		Prev = root;
+		if (root->_LeftThd != THREAD)
+			//防止在root走到最左节点时，最左节点在上面已经被线索化到父节点，
+			//如果不加限制条件root->_left就会走到父节点，造成死循环。
+			_PrevOrderThd(root->_left, Prev);
+		if (root->_RightThd != THREAD)
+			//这里针对上图最后一个节点是倒数第二个节点的父节点的这种情况必须需加上条件，
+			//因为走到6时，5的右会被线索化到6上，当把6的左右递归完后，返回到5递归5的右时，如果不加条件，就会继续进入到6，造成死循环。
+			_PrevOrderThd(root->_right, Prev);
 	}
 	Node* _CreateTree(T* a, size_t n,const T& invalid, size_t& index)
 	{
@@ -306,14 +283,15 @@ private:
 
 void TestBinaryTreeThd()
 {
+	//简单模式分别使用前序中序线索化
 	int array[15] = { 1, 2, '#', 3, '#', '#', 4, 5, '#', 6, '#', 7, '#', '#', 8 };
 	int a[10] = { 1, 2, 3, '#', '#', 4, '#', '#', 5, 6 };
-	BinaryTreeThdPrev<int> t1(array,15,'#');
+	BinaryTreeThd<int> t1(array,15,'#');
 	t1.PrevOrder();
 	t1.PrevOrderThd();
 
-	BinaryTreeThdPrev<int>::Iterator it = t1.Begin();
-	while (t1.End() != it)
+	BinaryTreeThd<int>::PrevIterator it = t1.PrevBegin();
+	while (t1.PrevEnd() != it)
 	{
 		cout << *it << " ";
 		++it;
@@ -324,8 +302,8 @@ void TestBinaryTreeThd()
 	t2.InOrder();
 	t2.InOrderThd();
 
-	BinaryTreeThd<int>::Iterator it1 = t2.Begin();
-	while (t2.End() != it1)
+	BinaryTreeThd<int>::InIterator it1 = t2.InBegin();
+	while (t2.InEnd() != it1)
 	{
 		cout << *it1 << " ";
 		++it1;
