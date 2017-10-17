@@ -1,0 +1,80 @@
+#ifndef _Heap_H_
+#define _Heap_H_
+
+#include<iostream>
+#include<vector>
+using namespace std;
+
+
+template<class T>
+struct Large
+{
+	bool operator()(T& l, T& r)
+	{
+		return l < r ? true : false;
+	}
+};
+
+template<class T>
+struct Less
+{
+	bool operator()(T& l, T& r)
+	{
+		return l > r ? true : false;
+	}
+};
+
+template<class T,class Compere = Large<T>>
+class Heap
+{
+public:
+	Heap(T* a, size_t n)
+	{
+		v.reserve(n);
+		for (int i = 0; i < n; ++i)
+		{
+			v.push_back(a[i]);
+		}
+		
+		//½¨´ó¶Ñ
+		for (int i = (n - 2) / 2; i >=0; --i)
+		{
+			size_t num = v.size();
+			AdJustDown(i,num);
+		}
+	}
+
+	void AdJustDown(int i,size_t n)
+	{
+		Compere m;
+		int Parent = i;
+		int Child = i * 2 + 1;
+		while (Child<n)
+		{
+			if (Child<(n-1)&&m(v[Child],v[Child+1]))
+			{
+				++Child;
+			}
+			if (m(v[Parent], v[Child]))
+			{
+				swap(v[Parent], v[Child]);
+				Parent = Child;
+				Child = Parent * 2 + 1;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+private:
+	vector<int> v;
+};
+
+void TestHeap()
+{
+	int a[] = { 10, 11, 13, 12, 16, 18, 15, 17, 14, 19 };
+	Heap<int,Less> h1(a,10);
+}
+
+#endif
