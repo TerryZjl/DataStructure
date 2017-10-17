@@ -44,22 +44,56 @@ public:
 		}
 	}
 
-	void AdJustDown(int i,size_t n)
+	void Push(const T& x)
+	{
+		v.push_back(x);
+		int i = v.size()-1;
+		AdJustUp(i);
+	}
+	void Pop()
+	{
+		int n = v.size();
+		swap(v[0], v[n - 1]);
+		v.pop_back();
+		AdJustDown(0, n - 2);
+	}
+private:
+	void AdJustDown(int i, size_t n)
 	{
 		Compere m;
 		int Parent = i;
 		int Child = i * 2 + 1;
 		while (Child<n)
 		{
-			if (Child<(n-1)&&m(v[Child],v[Child+1]))
+			if (Child<(n - 1) && m(v[Child], v[Child + 1]))
 			{
 				++Child;
 			}
 			if (m(v[Parent], v[Child]))
 			{
-				swap(v[Parent], v[Child]);
+				swap(v[Child], v[Parent]);
 				Parent = Child;
 				Child = Parent * 2 + 1;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	void AdJustUp(int i)
+	{
+		Compere m;
+		int Child = i;
+		int Parent = (Child - 1) / 2;
+		while (Child > 0)
+		{
+			if (m(v[Parent], v[Child]))
+			{
+				swap(v[Parent], v[Child]);
+				Child = Parent;
+				Parent = (Child - 1) / 2;
 			}
 			else
 			{
@@ -74,7 +108,10 @@ private:
 void TestHeap()
 {
 	int a[] = { 10, 11, 13, 12, 16, 18, 15, 17, 14, 19 };
-	Heap<int,Less> h1(a,10);
+	Heap<int,Large<int>> h1(a,10);
+	h1.Push(20);
+	h1.Pop();
+
 }
 
 #endif
