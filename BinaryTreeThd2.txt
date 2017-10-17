@@ -165,6 +165,43 @@ public:
 		cout << endl;
 	}
 
+	void PrintPrevThd()
+	{
+		Node* cur = _root;
+		while (cur)
+		{
+			while (cur&&cur->_LeftThd != THREAD)
+			{
+				cout << cur->_data << " ";
+				cur = cur->_left;
+			}
+			cout << cur->_data << " ";
+			cur = cur->_right;
+		}
+		cout << endl; 
+	}
+	void PrintInThd()
+	{
+		Node* cur = _root;
+		while (cur)
+		{
+			while (cur->_LeftThd==LINK)
+			{
+				cur = cur->_left;
+			}
+			cout << cur->_data << " ";
+			while (cur->_RightThd == THREAD)
+			{
+				if (cur->_right == NULL)
+					break;
+				cur = cur->_right;
+				cout << cur->_data << " ";
+			}
+			cur = cur->_right;
+		}
+		cout << endl;
+	}
+
 
 	void PrevOrderThd()
 	{
@@ -319,22 +356,24 @@ void TestBinaryTreeThd()
 	int array[15] = { 1, 2, '#', 3, '#', '#', 4, 5, '#', 6, '#', 7, '#', '#', 8 };
 	int a[10] = { 1, 2, 3, '#', '#', 4, '#', '#', 5, 6 };
 
-	BinaryTreeThd<int> t1(a, sizeof(a) / sizeof(a[0]), '#');
-	t1.InOrder();
-	t1.InOrderThd();
+	BinaryTreeThd<int> t1(array, sizeof(array) / sizeof(array[0]), '#');
+	//BinaryTreeThd<int> t1(a, sizeof(a) / sizeof(a[0]), '#');
+	t1.PrevOrder();
+	t1.PrevOrderThd();
 
-	BinaryTreeThd<int>::Iterator& it1 = t1.InBegin();
-	while (t1.InEnd()!= it1)
+	t1.PrintPrevThd();
+	BinaryTreeThd<int>::Iterator& it1 = t1.PrevBegin();
+	while (t1.PrevEnd()!= it1)
 	{
 		cout << *it1 << " ";
 		++it1;
 	}
 	cout << endl;
-
 	BinaryTreeThd<int> t2(array, sizeof(array) / sizeof(array[0]), '#');
+	//BinaryTreeThd<int> t2(a, sizeof(a) / sizeof(a[0]), '#');
 	t2.InOrder();
 	t2.InOrderThd();
-
+	t2.PrintInThd();
 	BinaryTreeThd<int>::Iterator& it2 = t2.InBegin();
 	while (t2.InEnd() != it2)
 	{
@@ -342,6 +381,7 @@ void TestBinaryTreeThd()
 		++it2;
 	}
 	cout << endl;
+	
 }
 
 #endif
