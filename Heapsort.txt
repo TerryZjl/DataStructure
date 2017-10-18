@@ -1,28 +1,18 @@
-#ifndef _HEAP_
-#define _HEAP_
-
-#include<iostream>
-#include<vector>
-using namespace std;
-
-vector<int> s;
-void AdjustDown(int root)
+void AdJustDown(int* a, int i, size_t n)
 {
-	int parent = root;
-	int chird = parent * 2 + 1;
-
-	while(chird < s.size())
+	int Parent = i;
+	int Child = i * 2 + 1;
+	while (Child<n)
 	{
-		if ((chird+1<s.size())&&s[chird] < s[chird + 1])
+		if (Child<(n - 1) && a[Child]< a[Child + 1])
 		{
-			chird++;
+			++Child;
 		}
-
-		if (s[parent] < s[chird])
+		if (a[Parent]< a[Child])
 		{
-			swap(s[parent], s[chird]);
-			parent = chird;
-			chird = parent * 2 + 1;
+			swap(a[Child], a[Parent]);
+			Parent = Child;
+			Child = Parent * 2 + 1;
 		}
 		else
 		{
@@ -31,38 +21,28 @@ void AdjustDown(int root)
 	}
 }
 
-void HeapSort(int *a, int len)
+
+//¶ÑÅÅÉýÐò-½¨´ó¶Ñ
+void HeapSort(int* a , int n)
 {
-	//½¨¶Ñ
-	//s.resize(len, 0);
-	for (size_t i = 0; i < len; i++)
+	
+	for (int i = (n - 2) / 2; i >= 0; --i)
 	{
-		s.push_back(a[i]);
+		AdJustDown(a, i, n);
 	}
-	for (int j = (len - 2) / 2; j >= 0; j--)
+
+	int cur = n;
+	while (cur>0)
 	{
-		AdjustDown(j);
-	}
-	for (int end = len - 1; end >= 0;)
-	{
-		a[end] = s[0];
-		s[0] = s[end];
-		end--;
-		s.pop_back();
-		AdjustDown(0);
+		swap(a[0], a[cur-1]);
+		--cur;
+		AdJustDown(a, 0, cur);
 	}
 }
-
 
 void TestHeapSort()
 {
-	int a[10] = { 2, 5, 4, 9, 3, 6, 8, 7, 1, 0 };
+	int a[] = { 10, 11, 13, 12, 16, 18, 15, 17, 14, 19 };
 	HeapSort(a, 10);
-	for (size_t i = 0; i < 10; i++)
-	{
-		cout << a[i] << " ";
-	}
-	cout << endl;
+	int i = 0;
 }
-
-#endif
