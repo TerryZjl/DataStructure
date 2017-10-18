@@ -1,0 +1,86 @@
+#ifndef _HUfM_H_
+#define _HUfM_H_
+
+
+#include<iostream>
+#include<queue>
+#include<vector>
+using namespace std;
+
+template<class W>
+struct HuffmanNode
+{
+	HuffmanNode<W>* _left;
+	HuffmanNode<W>* _right;
+	HuffmanNode<W>* _parent;
+	W _w;
+
+	HuffmanNode(const W& w)
+		:_left(NULL)
+		, _right(NULL)
+		, _parent(NULL)
+		, _w(w)
+	{}
+};
+
+template<class W>
+class HuffmanTree
+{
+	typedef HuffmanNode<W> Node;
+public:
+	HuffmanTree()
+		:_root(NULL)
+	{}
+	HuffmanTree(W* w,size_t n,const W& invalid)
+	{
+		priority_queue<Node*, vector<Node*>> heap;
+
+		//¹¹½¨hufmanÊ÷
+		for (size_t i = 0; i < n; ++i)
+		{
+			if (invalid!= w[i])
+				heap.push(new Node(w[i]));
+		}
+		
+		Node* cur = NULL;
+		while (heap.size()>1)
+		{
+			Node* Left = heap.top();
+			heap.pop();
+			Node* Right = heap.top();
+			heap.pop();
+
+			cur = new Node(Right->_w + Left->_w);
+			cur->_left = Left;
+			cur->_right = Right;
+			heap.push(cur);
+		}
+		_root = cur;
+	}
+
+	~HuffmanTree()
+	{
+		_Destory(_root);
+	}
+private:
+	void _Destory(Node* root)
+	{
+		if (NULL == NULL)
+			return;
+		_Destory(root->_left);
+		_Destory(root->_right);
+		delete root;
+		root = NULL;
+	}
+private:
+	Node* _root;
+};
+
+void TestHuffman()
+{
+	int a[] = { 6, 3, 2, 1 };
+	HuffmanTree<int> hf(a,4,0);
+	int i = 0; 
+}
+
+#endif
