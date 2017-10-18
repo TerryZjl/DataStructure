@@ -36,7 +36,7 @@ public:
 			v.push_back(a[i]);
 		}
 		
-		//½¨´ó¶Ñ
+		//½¨¶Ñ
 		for (int i = (n - 2) / 2; i >=0; --i)
 		{
 			size_t num = v.size();
@@ -55,7 +55,17 @@ public:
 		int n = v.size();
 		swap(v[0], v[n - 1]);
 		v.pop_back();
-		AdJustDown(0, n - 2);
+		AdJustDown(0, n-1);
+	}
+
+	T& Top()
+	{
+		return v.front();
+	}
+
+	bool Empty()
+	{
+		return v.empty();
 	}
 private:
 	void AdJustDown(int i, size_t n)
