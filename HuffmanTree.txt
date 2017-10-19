@@ -1,86 +1,195 @@
-#ifndef _HUfM_H_
-#define _HUfM_H_
-
+#ifndef _FILECOMPRESS_H_
+#define _FILECOMPRESS_H_
 
 #include<iostream>
-#include<queue>
-#include<vector>
+#include"Huffman.h"
+#include<stack>
+#include<algorithm>
+#pragma warning(disable:4996)
 using namespace std;
 
-template<class W>
-struct HuffmanNode
-{
-	HuffmanNode<W>* _left;
-	HuffmanNode<W>* _right;
-	HuffmanNode<W>* _parent;
-	W _w;
 
-	HuffmanNode(const W& w)
-		:_left(NULL)
-		, _right(NULL)
-		, _parent(NULL)
-		, _w(w)
-	{}
+
+struct CharInfo
+{
+	unsigned char _ch;
+	long long _count;
+	string _code;
+
+	CharInfo operator+(const CharInfo& r)
+	{
+		CharInfo info;
+		info._count = _count + r._count;
+		return info;
+	}
+	bool operator!=(const CharInfo& r)
+	{
+		return this->_count != r._count ? true : false;
+	}
+	bool operator==(const CharInfo& r)
+	{
+		return this->_count == r._count ? true : false;
+	}
 };
 
-template<class W>
-class HuffmanTree
+class FileCompress
 {
-	typedef HuffmanNode<W> Node;
+	typedef HuffmanNode<CharInfo> Node;
 public:
-	HuffmanTree()
-		:_root(NULL)
-	{}
-	HuffmanTree(W* w,size_t n,const W& invalid)
+	FileCompress()
 	{
-		priority_queue<Node*, vector<Node*>> heap;
-
-		//构建hufman树
-		for (size_t i = 0; i < n; ++i)
+		for (size_t i = 0; i < 256; i++)
 		{
-			if (invalid!= w[i])
-				heap.push(new Node(w[i]));
+			_infos[i]._count = 0;
+			_infos[i]._ch = i;
 		}
+	}
+	// Input.txt->Input.txt.huffman 
+	void Compress(const char* file)
+	{
+		FILE* Out = fopen(file, "rb");
+
+		//统计文件里字符出现的次数
+		unsigned char ch;
+		fread(&ch, sizeof(char), 1, Out);
+		while (!feof(Out))
+		{
+			++_infos[ch]._count;
+			fread(&ch, sizeof(char), 1, Out);
+		}
+
+		//根据字符出现次数构建Huffman树
+		CharInfo invalid;
+		invalid._count = 0;
+		HuffmanTree<CharInfo> hf(_infos, 256, invalid);
+
+		//生成字符对应的hufman编码，存入code
+		GetHuffmanCode(hf.GetRoot());
+
+		//压缩
+		string OutName = file;
+		string InName = OutName + ".huffman";
+		FILE* In = fopen(InName.c_str(), "wb");
+		fseek(Out, 0, SEEK_SET); 
+		fread(&ch, sizeof(char), 1, Out);
+
+		char value = 0;
+		int pos = 0;
+		while (!feof(Out))
+		{
+			string& code = _infos[ch]._code;
+			for (size_t i = 0; i < code.size(); i++)
+			{
+				value <<= 1;
+				++pos;
+				if (code[i] == '1')
+				{
+					value |= 1;
+				}
+				
+				if (pos == 8)
+				{
+					fwrite(&value, sizeof(char), 1, In);
+					value = 0;
+					pos = 0;
+				}
+			}
+			fread(&ch, sizeof(char), 1, Out);
+		}
+		fwrite(&value, sizeof(char), 1, In);
+		fclose(In);
+		fclose(Out);
+	}
+	// Input.txt.huffman -> Input.txt.unhuffman 
+	void Uncompress(const char* file)
+	{
+		//重建Huffman树
+		CharInfo invalid;
+		invalid._count = 0;
+		HuffmanTree<CharInfo> hf(_infos, 256, invalid);
+
+		//解压缩
+		string str = file;
+		size_t pos = str.rfind('.');
+		string FileName = str.substr(0, pos)+".unhfm";
+ 		FILE* Out = fopen(file, "rb");
+		FILE* In = fopen(FileName.c_str(), "wb");
 		
-		Node* cur = NULL;
-		while (heap.size()>1)
+		
+		char ch = 0;
+		Node* root = hf.GetRoot();
+		Node* cur = root;
+		int count = cur->_w._count;
+		ch = getc(Out);
+		while (count)
 		{
-			Node* Left = heap.top();
-			heap.pop();
-			Node* Right = heap.top();
-			heap.pop();
-
-			cur = new Node(Right->_w + Left->_w);
-			cur->_left = Left;
-			cur->_right = Right;
-			heap.push(cur);
+			for (int i = 7; i >= 0; --i)
+			{
+				if ((ch&(1 << i)) == 0)
+				{
+					cur = cur->_left;
+				}
+				else
+				{
+					cur = cur->_right;
+				}
+				if (cur->_left == NULL&&cur->_right == NULL)
+				{
+					fputc(cur->_w._ch,In);
+					cur = root;
+					--count;
+					if (count < 1)
+					{
+						break;
+					}
+				}
+			}
+			ch = fgetc(Out);
 		}
-		_root = cur;
+		fclose(Out);
+		fclose(In);
 	}
+private:
+	char GetCode(const unsigned char x)
+	{
 
-	~HuffmanTree()
-	{
-		_Destory(_root);
 	}
-private:
-	void _Destory(Node* root)
+	void GetHuffmanCode(Node* root)
 	{
-		if (NULL == NULL)
+		if (root == NULL)
 			return;
-		_Destory(root->_left);
-		_Destory(root->_right);
-		delete root;
-		root = NULL;
+
+		if (root->_left == NULL&& root->_right == NULL)
+		{
+			string& code = _infos[root->_w._ch]._code;
+			Node* cur = root;
+			while (cur->_parent)
+			{
+				if (cur == cur->_parent->_left)
+				{
+					code.push_back('0');
+				}
+				else
+				{
+					code.push_back('1');
+				}
+				cur = cur->_parent;
+			}
+			reverse(code.begin(), code.end());
+		}
+
+		GetHuffmanCode(root->_left);
+		GetHuffmanCode(root->_right);
 	}
 private:
-	Node* _root;
+	CharInfo _infos[256];
 };
 
-void TestHuffman()
-{
-	int a[] = { 6, 3, 2, 1 };
-	HuffmanTree<int> hf(a,4,0);
-	int i = 0; 
-}
 
+void TestFileCompress()
+{
+	FileCompress fc;
+	fc.Compress("input.txt");
+	fc.Uncompress("input.txt.huffman");
+}
 #endif
