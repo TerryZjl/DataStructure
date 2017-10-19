@@ -24,11 +24,11 @@ struct CharInfo
 	}
 	bool operator!=(const CharInfo& r)
 	{
-		return this->_ch != r._ch ? true:false;
+		return this->_count != r._count ? true : false;
 	}
 	bool operator==(const CharInfo& r)
 	{
-		return this->_ch == r._ch ? true : false;
+		return this->_count == r._count ? true : false;
 	}
 };
 
@@ -48,7 +48,7 @@ public:
 	void Compress(const char* file)
 	{
 		FILE* Out = fopen(file, "rb");
-		
+
 		//统计文件里字符出现的次数
 		unsigned char ch;
 		fread(&ch, sizeof(char), 1, Out);
@@ -66,11 +66,47 @@ public:
 		//生成字符对应的hufman编码，存入code
 		GetHuffmanCode(hf.GetRoot());
 
-   
+		//压缩
+		string OutName = file;
+		string InName = OutName + ".huffman";
+		FILE* In = fopen(InName.c_str(), "wb");
+		fseek(Out, 0, SEEK_SET); 
+		fread(&ch, sizeof(char), 1, Out);
+
+		char value = 0;
+		int pos = 0;
+		while (!feof(Out))
+		{
+			string& code = _infos[ch]._code;
+			for (size_t i = 0; i < code.size(); i++)
+			{
+				value <<= 1;
+				++pos;
+				if (code[i] == '1')
+				{
+					value |= 1;
+				}
+				
+				if (pos == 8)
+				{
+					fwrite(&value, sizeof(char), 1, In);
+					value = 0;
+					pos = 0;
+				}
+			}
+			fread(&ch, sizeof(char), 1, Out);
+		}
+		fwrite(&value, sizeof(char), 1, In);
+		fclose(In);
+		fclose(Out);
 	}
 	// Input.txt.huffman -> Input.txt.unhuffman 
 	void Uncompress(const char* file);
 private:
+	char GetCode(const unsigned char x)
+	{
+
+	}
 	void GetHuffmanCode(Node* root)
 	{
 		if (root == NULL)
@@ -84,11 +120,11 @@ private:
 			{
 				if (cur == cur->_parent->_left)
 				{
-					code.push_back(0);
+					code.push_back('0');
 				}
 				else
 				{
-					code.push_back(1);
+					code.push_back('1');
 				}
 				cur = cur->_parent;
 			}
