@@ -1,0 +1,111 @@
+#ifndef _FILECOMPRESS_H_
+#define _FILECOMPRESS_H_
+
+#include<iostream>
+#include"Huffman.h"
+#include<stack>
+#include<algorithm>
+#pragma warning(disable:4996)
+using namespace std;
+
+
+
+struct CharInfo
+{
+	unsigned char _ch;
+	long long _count;
+	string _code;
+
+	CharInfo operator+(const CharInfo& r)
+	{
+		CharInfo info;
+		info._count = _count + r._count;
+		return info;
+	}
+	bool operator!=(const CharInfo& r)
+	{
+		return this->_ch != r._ch ? true:false;
+	}
+	bool operator==(const CharInfo& r)
+	{
+		return this->_ch == r._ch ? true : false;
+	}
+};
+
+class FileCompress
+{
+	typedef HuffmanNode<CharInfo> Node;
+public:
+	FileCompress()
+	{
+		for (size_t i = 0; i < 256; i++)
+		{
+			_infos[i]._count = 0;
+			_infos[i]._ch = i;
+		}
+	}
+	// Input.txt->Input.txt.huffman 
+	void Compress(const char* file)
+	{
+		FILE* Out = fopen(file, "rb");
+		
+		//统计文件里字符出现的次数
+		unsigned char ch;
+		fread(&ch, sizeof(char), 1, Out);
+		while (!feof(Out))
+		{
+			++_infos[ch]._count;
+			fread(&ch, sizeof(char), 1, Out);
+		}
+
+		//根据字符出现次数构建Huffman树
+		CharInfo invalid;
+		invalid._count = 0;
+		HuffmanTree<CharInfo> hf(_infos, 256, invalid);
+
+		//生成字符对应的hufman编码，存入code
+		GetHuffmanCode(hf.GetRoot());
+
+   
+	}
+	// Input.txt.huffman -> Input.txt.unhuffman 
+	void Uncompress(const char* file);
+private:
+	void GetHuffmanCode(Node* root)
+	{
+		if (root == NULL)
+			return;
+
+		if (root->_left == NULL&& root->_right == NULL)
+		{
+			string& code = _infos[root->_w._ch]._code;
+			Node* cur = root;
+			while (cur->_parent)
+			{
+				if (cur == cur->_parent->_left)
+				{
+					code.push_back(0);
+				}
+				else
+				{
+					code.push_back(1);
+				}
+				cur = cur->_parent;
+			}
+			reverse(code.begin(), code.end());
+		}
+
+		GetHuffmanCode(root->_left);
+		GetHuffmanCode(root->_right);
+	}
+private:
+	CharInfo _infos[256];
+};
+
+
+void TestFileCompress()
+{
+	FileCompress fc;
+	fc.Compress("input.txt");
+}
+#endif
