@@ -1,3 +1,7 @@
+#include<iostream>
+using namespace std;
+
+
 void AdJustDown(int* a, int i, size_t n)
 {
 	int Parent = i;
