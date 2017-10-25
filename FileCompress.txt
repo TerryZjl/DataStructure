@@ -4,6 +4,7 @@
 #include<iostream>
 #include"Huffman.h"
 #include<stack>
+#include<assert.h>
 #include<algorithm>
 #pragma warning(disable:4996)
 using namespace std;
@@ -12,7 +13,7 @@ using namespace std;
 
 struct CharInfo
 {
-	unsigned char _ch;
+	char _ch;
 	long long _count;
 	string _code;
 
@@ -47,19 +48,20 @@ public:
 	// Input.txt->Input.txt.huffman 
 	void Compress(const char* file)
 	{
+	
 		FILE* Out = fopen(file, "rb");
 
 		//统计文件里字符出现的次数
-		unsigned char ch;
+		char ch;
 		fread(&ch, sizeof(char), 1, Out);
 		while (!feof(Out))
 		{
-			++_infos[ch]._count;
+			++_infos[(unsigned char)ch]._count;
 			fread(&ch, sizeof(char), 1, Out);
 		}
 
 		//根据字符出现次数构建Huffman树
-		CharInfo invalid;
+		CharInfo invalid;		
 		invalid._count = 0;
 		HuffmanTree<CharInfo> hf(_infos, 256, invalid);
 
@@ -67,46 +69,104 @@ public:
 		GetHuffmanCode(hf.GetRoot());
 
 		//压缩
-		string OutName = file;
-		string InName = OutName + ".huffman";
-		FILE* In = fopen(InName.c_str(), "wb");
+		string str1 = file;
+		size_t pos = str1.rfind('.');
+		assert(pos != string::npos);
+		string str2 = str1.substr(0, pos) + ".hfm";
+		FILE* In = fopen(str2.c_str(), "wb");
+		assert(In);
+		//string OutName = file;
+		//string InName = OutName + ".huffman";
+		//FILE* In = fopen(InName.c_str(), "wb");
 		fseek(Out, 0, SEEK_SET); 
 		fread(&ch, sizeof(char), 1, Out);
 
+		////将Huffman code写入压缩文件;
 		char value = 0;
-		int pos = 0;
+		int count = 0;
+		int n = 0;
 		while (!feof(Out))
 		{
-			string& code = _infos[ch]._code;
+			string& code = _infos[(unsigned char)ch]._code;
+			++n;
 			for (size_t i = 0; i < code.size(); i++)
 			{
 				value <<= 1;
-				++pos;
+				++count;
 				if (code[i] == '1')
 				{
 					value |= 1;
 				}
 				
-				if (pos == 8)
+				if (count == 8)
 				{
 					fwrite(&value, sizeof(char), 1, In);
 					value = 0;
-					pos = 0;
+					count = 0;
 				}
 			}
 			fread(&ch, sizeof(char), 1, Out);
 		}
 		fwrite(&value, sizeof(char), 1, In);
+		cout << "压缩" << n << " 个字符" << endl;
 		fclose(In);
 		fclose(Out);
 	}
 	// Input.txt.huffman -> Input.txt.unhuffman 
-	void Uncompress(const char* file);
-private:
-	char GetCode(const unsigned char x)
+	void Uncompress(const char* file)
 	{
+		//重建Huffman树
+		CharInfo invalid;
+		invalid._count = 0;
+		HuffmanTree<CharInfo> hf(_infos, 256, invalid);
 
+		//解压缩
+		string str = file;
+		size_t pos = str.rfind('.');
+		string FileName = str.substr(0, pos)+".unhfm.txt";
+ 		FILE* Out = fopen(file, "rb");
+		FILE* In = fopen(FileName.c_str(), "wb");
+		
+		
+		int n = 0;
+		char ch = 0;
+		Node* root = hf.GetRoot();
+		Node* cur = root;
+		int count = cur->_w._count;
+		fread(&ch, sizeof(char), 1, Out);
+		while (count)
+		{
+			for (int i = 7; i >= 0; --i)
+			{
+				if ((ch&(1 << i)) == 0)
+				{
+					cur = cur->_left;
+				}
+				else
+				{
+					cur = cur->_right;
+				}
+				if (cur->_left == NULL&&cur->_right == NULL)
+				{
+					n++;
+					fwrite(&(cur->_w._ch), sizeof(char), 1, In);
+					//fputc(cur->_w._ch,In);
+					cur = root;
+					--count;
+					if (count < 1)
+					{
+						break;
+					}
+				}
+			}
+			fread(&ch, sizeof(char), 1, Out);
+			//ch = fgetc(Out);
+		}
+		cout << "解压 " << n<< "个字符" << endl;
+		fclose(Out);
+		fclose(In);
 	}
+private:
 	void GetHuffmanCode(Node* root)
 	{
 		if (root == NULL)
@@ -114,7 +174,7 @@ private:
 
 		if (root->_left == NULL&& root->_right == NULL)
 		{
-			string& code = _infos[root->_w._ch]._code;
+			string& code = _infos[(unsigned char)root->_w._ch]._code;
 			Node* cur = root;
 			while (cur->_parent)
 			{
@@ -143,5 +203,6 @@ void TestFileCompress()
 {
 	FileCompress fc;
 	fc.Compress("input.txt");
+	fc.Uncompress("input.hfm");
 }
 #endif
