@@ -5,6 +5,7 @@
 #include"Huffman.h"
 #include<stack>
 #include<assert.h>
+#include<string>
 #include<algorithm>
 #pragma warning(disable:4996)
 using namespace std;
@@ -75,13 +76,29 @@ public:
 		string str2 = str1.substr(0, pos) + ".hfm";
 		FILE* In = fopen(str2.c_str(), "wb");
 		assert(In);
-		//string OutName = file;
-		//string InName = OutName + ".huffman";
-		//FILE* In = fopen(InName.c_str(), "wb");
 		fseek(Out, 0, SEEK_SET); 
 		fread(&ch, sizeof(char), 1, Out);
 
-		////将Huffman code写入压缩文件;
+		//编写配置文件
+		//1.
+		CharInfo info;
+		for (size_t i = 0; i < 256; ++i)
+		{
+			if (_infos[i] != invalid)
+			{
+				info._ch = _infos[i]._ch;
+				info._count = _infos[i]._count;
+				fwrite(&info, sizeof(info), 1, In);
+			}
+		}
+
+		info._count = -1;
+		fwrite(&info, sizeof(info), 1, In);
+
+		
+
+
+		//将Huffman code写入压缩文件;
 		char value = 0;
 		int count = 0;
 		int n = 0;
@@ -107,7 +124,13 @@ public:
 			}
 			fread(&ch, sizeof(char), 1, Out);
 		}
-		fwrite(&value, sizeof(char), 1, In);
+
+		//如果最后一个字节没有压满，则需要把压入的位移到高位，方便解压；
+		if (count != 0)
+		{
+			value <<= (8 - count);
+			fwrite(&value, sizeof(char), 1, In);
+		}
 		cout << "压缩" << n << " 个字符" << endl;
 		fclose(In);
 		fclose(Out);
@@ -115,6 +138,29 @@ public:
 	// Input.txt.huffman -> Input.txt.unhuffman 
 	void Uncompress(const char* file)
 	{
+		for (size_t i = 0; i < 256; i++)
+		{
+			_infos[i]._count = 0;
+			_infos[i]._ch = i;
+		}
+		//读取配置文件，统计字符次数
+		FILE* Out = fopen(file, "rb");
+		assert(Out);
+
+		CharInfo info;
+		fread(&info, sizeof(info), 1, Out);
+		while (info._count != -1)
+		{
+			if (info._count != 0)
+			{
+				_infos[(unsigned char)info._ch]._ch = info._ch;
+				_infos[(unsigned char)info._ch]._count = info._count;
+				fread(&info, sizeof(info), 1, Out);
+			}
+		}
+	
+
+		
 		//重建Huffman树
 		CharInfo invalid;
 		invalid._count = 0;
@@ -124,8 +170,8 @@ public:
 		string str = file;
 		size_t pos = str.rfind('.');
 		string FileName = str.substr(0, pos)+".unhfm.txt";
- 		FILE* Out = fopen(file, "rb");
 		FILE* In = fopen(FileName.c_str(), "wb");
+		assert(In);
 		
 		
 		int n = 0;
@@ -152,8 +198,8 @@ public:
 					fwrite(&(cur->_w._ch), sizeof(char), 1, In);
 					//fputc(cur->_w._ch,In);
 					cur = root;
-					--count;
-					if (count < 1)
+					count--;
+					if (count <=1)
 					{
 						break;
 					}
@@ -201,8 +247,8 @@ private:
 
 void TestFileCompress()
 {
-	FileCompress fc;
-	fc.Compress("input.txt");
-	fc.Uncompress("input.hfm");
+	FileCompress fc1;
+	fc1.Compress("input.txt");
+	fc1.Uncompress("input.hfm");
 }
 #endif
