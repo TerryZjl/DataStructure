@@ -44,7 +44,7 @@ void HeapSort(int* a , int n)
 	}
 }
 
-void TestHeapSort()
+void Test()
 {
 	int a[] = { 10, 11, 13, 12, 16, 18, 15, 17, 14, 19 };
 	HeapSort(a, 10);
