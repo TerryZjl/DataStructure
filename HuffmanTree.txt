@@ -186,10 +186,10 @@ private:
 };
 
 
-void Test()
+void TestFileCompress()
 {
 	FileCompress fc;
 	fc.Compress("input.txt");
-	fc.Uncompress("input.txt.huffman");
+//	fc.Uncompress("input.txt.huffman");
 }
 #endif
