@@ -2,6 +2,7 @@
 using namespace std;
 
 
+//向下调整算法
 void AdJustDown(int* a, int i, size_t n)
 {
 	int Parent = i;
@@ -44,7 +45,7 @@ void HeapSort(int* a , int n)
 	}
 }
 
-void Test()
+void TestHeapSort()
 {
 	int a[] = { 10, 11, 13, 12, 16, 18, 15, 17, 14, 19 };
 	HeapSort(a, 10);
