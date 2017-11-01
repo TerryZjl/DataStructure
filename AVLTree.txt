@@ -185,6 +185,144 @@ public:
 			}
 		}
 	}
+ 		void _InOder(Node*& root)
+	{
+		if (root == NULL)
+		{
+			return;
+		}
+
+		_InOder(root->_left);
+		cout << root->_key <<" "<< root->_bf << endl;
+		_InOder(root->_right);
+	}
+	int _Depth(Node* root) //因为在递归返回时，需要累加每一层递归，所以加1，依次求出深度
+	{
+		if (root == NULL)
+		{
+			return 0;
+		}
+
+		if ((root->_right == NULL)&&(root->_left == NULL))
+		{
+			return 1;
+		}
+		int DepL = _Depth(root->_left);
+		int DepR = _Depth(root->_right);
+		return DepL > DepR ? DepL+1 : DepR+1;
+	}
+
+
+	void _RotateRL(Node*& root)
+	{
+		Node* SubR = root->_right;
+		Node* SubRL = SubR->_left;
+		_RotateR(root->_right);
+		_RotateL(root);
+		if (SubRL->_bf == -1)
+		{
+			SubR->_bf = 1;
+			root->_bf = 0;
+		}
+		else if (SubRL->_bf == 1)
+		{
+			SubR->_bf = 0;
+			root->_bf = -1;
+		}
+		else
+		{
+			SubR->_bf = root->_bf = 0;
+		}
+	}
+	void _RotateLR(Node*& root)
+	{
+		Node* SubL = root->_left;
+		Node* SubLR = SubL->_right;
+		_RotateL(root->_left);
+		_RotateR(root);
+
+	    if (SubLR->_bf == -1)
+		{
+			SubL->_bf = 0;
+			root->_bf = 1;
+		}
+		else if (SubLR->_bf == 1)
+		{
+			SubL->_bf = -1;
+			root->_bf = 0;
+		}
+		else
+		{
+			SubL->_bf = root->_bf = 0;
+		}
+	}
+
+	void _RotateR(Node*& root)
+	{
+		Node* SubL = root->_left;
+		Node* SubLR = SubL->_right;
+		Node* ppNode = root->_prev;
+
+		root->_left = SubLR;
+		if (SubLR != NULL)
+		{
+			SubLR->_prev = root;
+		}
+
+		SubL->_right = root;
+		root->_prev = SubL;
+
+		if (ppNode != NULL)
+		{
+			if (ppNode->_left == root)
+			{
+				ppNode->_left = SubL;
+			}
+			else
+			{
+				ppNode->_right = SubL;
+			}
+			SubL->_prev = ppNode;
+		}
+		else
+		{
+			_root = SubL;
+			_root->_prev = NULL;
+		}
+	}
+	void _RotateL(Node*& root)
+	{
+		Node* SubR = root->_right;
+		Node* SubRL = SubR->_left;
+		Node* ppNode = root->_prev;
+
+		root->_right = SubRL;
+		if (SubRL != NULL)
+		{
+			SubRL->_prev = root;
+		}
+
+		SubR->_left = root;
+		root->_prev = SubR;
+
+		if (ppNode != NULL)
+		{
+			if (ppNode->_left == root)
+			{
+				ppNode->_left = SubR;
+			}
+			else
+			{
+				ppNode->_right = SubR;
+			}
+			SubR->_prev = ppNode;
+		}
+		else
+		{
+			_root = SubR;
+			_root->_prev = NULL;
+		}
+	}
 
 private:
 	Node* _root;
