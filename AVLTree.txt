@@ -1,0 +1,232 @@
+ #ifndef  _AVL_H__
+#define  _AVL_H__
+
+#include<iostream>
+using namespace std;
+
+template<class K>
+struct AVLTreeNode
+{
+	int _bf;
+	K _key;
+	AVLTreeNode<K>* _left;
+	AVLTreeNode<K>* _right;
+	AVLTreeNode<K>* _prev;
+
+	struct AVLTreeNode(const K& key)
+		:_key(key)
+		, _left(NULL)
+		, _right(NULL)
+		, _prev(NULL)
+		, _bf(0)
+	{}
+};
+
+template<class K>
+class AVLTree
+{
+	typedef AVLTreeNode<K> Node;
+public:
+	AVLTree()
+		:_root(NULL)
+	{}
+
+	bool Insert(const K& key)
+	{
+		if (_root == NULL)
+		{
+			_root = new Node(key);
+			return true;
+		}
+
+		Node* cur = _root;
+		Node* parent = cur->_prev;
+		while (cur)
+		{
+			if (cur->_key > key)
+			{
+				parent = cur;
+				cur = cur->_left;
+			}
+			else if (cur->_key < key)
+			{
+				parent = cur;
+				cur = cur->_right;
+			}
+			else
+			{
+				cout << key << "元素已经存在" << endl;
+				return false;
+			}
+		}
+
+		//创建新的结点
+		cur = new Node(key);
+
+		//开始插入
+		//bf = 右 - 左
+		if (parent->_key > key)
+		{
+			parent->_left = cur;
+			cur->_prev = parent;
+		}
+		else
+		{
+			parent->_right = cur;
+			cur->_prev = parent;
+		}
+
+
+		//调整平衡因子
+		while (parent)
+		{
+			if (parent->_left == cur)
+			{
+				--(parent->_bf);
+			}
+			else
+			{
+				++(parent->_bf);
+			}
+
+			if (parent->_bf == 0)
+			{
+				//说明结点是在树的子树高度低的一边插入了，插入后左右子树高度不超过1，不用调整
+				break;
+			}
+			else if ((parent->_bf == 2) || (parent->_bf == -2))
+			{
+				//旋转（旋转之后不需要在往上调整了）
+				//因为平衡因子每次只变化1，高度加到2了就旋转，旋转之后，又变到原来的高度，原来的所有的高度都是合理的，所以不用再向上调整了。
+
+				/*旋转这里可分为四种情况：
+				*1.下面左单旋和右单旋这两种情况比较简单。旋转完之后parent和cur的平衡因子都会变成0。
+				*    parent   O -2                 O  2
+				*            /                      \
+				*     cur   O -1   右单旋            O  1   左单旋
+				*          /                          \
+				*   Sub   O 0                          O  0
+				*2.左右双旋和右左双旋的平衡因子调节又分为三种情况
+				*（1）右左双旋
+				*       O 2      0/0/-1
+				*        \
+				*         O -1   1/0/0      右左双旋
+				*        /
+				*       O        -1/0/1
+				*平衡因子的三种情况
+				*   Sub   cur  parent	
+				*a.  0     0     0    Sub为插入的结点时，Sub为0，旋转后cur为0，parent为0
+				*b.  1     0    -1    Sub的右子树插入了节点，Sub为1，旋转后cur为0.parent为-1
+				*c. -1     1     0    Sub的左子树插入了节点，Sub为-1，旋转后cur为1，parent为0
+				*
+				*（2）左右双旋
+				*       O -2
+				*      /
+				*     O 1       左右双旋
+				*      \
+				*       O 0
+				*   Sub   cur   parent
+				*a.  0     0       0
+				*b.  1    -1       0
+				*c. -1     0       1
+				*/
+				if (parent->_bf == -2)
+				{
+					//       O -2
+					//      /
+					//     O -1       右单旋
+					//    /       
+					//   O 0
+					if (cur->_bf == -1)
+					{
+						parent->_left->_bf = parent->_bf = 0;
+						_RotateR(parent);
+					}
+					else
+					{
+						//       O -2
+						//      /
+						//     O 1       左右双旋
+						//      \       
+						//       O 0  
+						_RotateLR(parent);
+					}
+				}
+				else
+				{
+					//       O 2     
+					//        \
+															//         O -1    右左双旋
+					//        /       
+					//       O      
+					if (cur->_bf == -1)
+					{
+						_RotateRL(parent);
+					}
+					else
+					{
+						//      O 2
+						//       \
+						//        O 1       左单旋
+						//         \     
+						//          O 0
+						parent->_right->_bf = parent->_bf = 0;
+						_RotateL(parent);
+					}
+				}
+				break;
+			}
+			else
+			{
+				// |bf| == 1，说明是在原本左右子树一样高的情况插入了，导致现在差1.
+				//需要继续往上调整，当前左右子树虽不超过1，但祖父节点的左右子树高度可能受影响
+				cur = parent;
+				parent = parent->_prev;
+			}
+		}
+	}
+
+private:
+	Node* _root;
+};
+
+
+void TestAVLTree()
+{
+	AVLTree<int> t;
+	//int arr[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+	//int arr[] = { 4, 2, 6, 1, 3, 5, 15, 7, 16, 14 };
+	/*int arr[] = { 1, 2, 3, 4, 5 };
+
+	for (size_t i = 0; i < 5; i++)
+	{
+		t.Insert(arr[i]);
+	}
+	t.InOder();*/
+
+	t.Insert(5);
+	t.Insert(3);
+	t.Insert(4);
+	t.Insert(1);
+	t.Insert(7);
+	t.Insert(8);
+	t.Insert(2);
+	t.Insert(6);
+	t.Insert(0);
+	t.Insert(9);
+	t.InOder();
+
+
+	cout << t.IsCommParent(t.Find(2), t.Find(4))->_key << endl;;
+
+	/*if (t.newIsBlance())
+	{
+		cout << "yes" << endl;
+	}
+	else
+	{
+		cout << "No" << endl;
+	}*/
+}
+
+#endif 
