@@ -185,7 +185,150 @@ public:
 			}
 		}
 	}
- 		void _InOder(Node*& root)
+
+	bool Remove(const K& key);
+	//Node* Find(const K& key);
+	void InOder()
+	{
+		_InOder(_root);
+	}
+
+	bool newIsBlance()
+	{
+		int depth = 0;
+		return _newIsBlance(_root, depth);
+	}
+
+
+	bool IsBlance()
+	{
+		int depth = 0;
+		return _IsBlance(_root,depth);
+	}
+	Node* Find(const K& key)
+	{
+		Node* cur = _root;
+		while (cur)
+		{
+			if (key > cur->_key)
+			{
+				cur = cur->_right;
+			}
+			else if (key<cur->_key)
+			{
+				cur = cur->_left;
+			}
+			else
+			{
+				return cur;
+			}
+		}
+		return NULL;
+	}
+
+	Node* IsCommParent(Node* node1, Node* node2)
+	{
+		if (_root == NULL)
+		{
+			return NULL;
+		}
+		queue<Node*> q;
+		Node* cur = node1;
+		q.push(cur);
+		while (cur != _root)
+		{
+			cur = cur->_prev;
+			q.push(cur);
+		}
+		Node* cur2 = node2;
+		while (!q.empty())
+		{
+			cur2 = node2;
+			cur = q.front();
+			while (cur2!=NULL)
+			{
+				if (cur2->_key == cur->_key)
+					return cur;
+				cur2 = cur2->_prev;
+			}
+			q.pop();
+		}
+	}
+protected:
+	bool _newIsBlance(Node* root, int& depth)
+	{
+		if (root == NULL)
+		{
+			depth = 0;
+			return true;
+		}
+
+		if (root->_left == NULL&&root->_right == NULL)
+		{
+			depth = 1;
+			return true;
+		}
+
+		_newIsBlance(root->_left, depth);
+		int left = depth;
+		_newIsBlance(root->_right, depth);
+		int right = depth;
+
+		if (right - left<2 && right - left>-2)
+		{
+			if (right > left)
+			{
+				depth = right + 1;
+			}
+			else
+			{
+				depth = left + 1;
+			}
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	bool _IsBlance(Node* root, int& depth)
+	{
+		if (root == NULL)
+		{
+			depth = 0;
+			return true;
+		}
+
+		int left = 0;
+		int right = 0;
+		if (_IsBlance(root->_left, depth))
+		{
+			depth++;
+			left += depth;
+		}
+
+		if (_IsBlance(root->_right, depth))
+		{
+			depth++;
+			right += depth;
+		}
+
+		if ((right - left) != root->_bf)
+		{
+			return false;
+		}
+		return true;
+	}
+	//bool _IsBlance(Node* root)
+	//{
+	//	if (root == NULL)
+	//		return true;
+	//	
+	//	int left = _Depth(root->_left);
+	//	int right = _Depth(root->_right);
+	//	return (abs(left - right) < 2) && _IsBlance(root->_left) && _IsBlance(root->_right);
+	//}
+	void _InOder(Node*& root)
 	{
 		if (root == NULL)
 		{
@@ -323,7 +466,6 @@ public:
 			_root->_prev = NULL;
 		}
 	}
-
 private:
 	Node* _root;
 };
