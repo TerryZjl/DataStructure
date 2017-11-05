@@ -1,0 +1,15 @@
+#ifndef _MYMAP_H_
+#define _MYMAP_H_
+
+template<class K,class V>
+class MyMap
+{
+	typedef K KeyType;
+	typedef pair<const K, V> ValueType;
+	typedef  RBTreeNode<KeyType,ValueType> RBNode;
+public:
+
+private:
+	RBNode* _node;
+};
+#endif
