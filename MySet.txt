@@ -1,0 +1,16 @@
+
+#ifndef _MYSET_H_
+#define _MYSET_H_
+
+template<class K>
+class MySet
+{
+	typedef K KeyType;
+	typedef K ValueType;
+	typedef  RBTreeNode<KeyType,ValueType> RBNode;
+public:
+
+private:
+	RBNode* _node;
+};
+#endif
