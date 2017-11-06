@@ -1,0 +1,397 @@
+/*
+ * 红黑树
+ * 性质：1.每条路要么是红节点，要么是黑节点
+ *       2.根结点是黑节点
+ *       3.没有连续的红节点
+ *       4.每条路上的红节点和黑结点数相等
+ *       5.每个叶子结点都是黑色（这里的叶子结点指的是NULL结点）
+ *insert:每次插入时默认插入的是红节点
+ *       1.树为空时直接插入
+ *       2.父亲为黑色，直接插入
+ *       3.父亲为红色时，看叔叔结点
+ *         （1）叔叔为空，
+ *         （2）叔叔存在且为黑
+ *          (3) 叔叔存在且为红（不用旋转）
+ */
+#ifndef  _RBT_H__
+#define  _RBT_H__
+
+#include<iostream>
+using namespace std;
+
+enum Color
+{
+	RED,
+	BLANK,
+};
+
+template<class K>
+struct RBTreeNode
+{
+	Color _col;
+	K _key;
+	RBTreeNode<K>* _left;
+	RBTreeNode<K>* _right;
+	RBTreeNode<K>* _prev;
+
+	RBTreeNode(const K& key)
+		:_key(key)
+		, _col(RED)
+		, _left(NULL)
+		, _right(NULL)
+		, _prev(NULL)
+	{}
+};
+
+template<class K>
+class RBTree
+{
+	typedef RBTreeNode<K> Node;
+public:
+	RBTree()
+		:_root(NULL)
+	{}
+
+	bool Insert(const K& key)
+	{
+		//空
+		if (_root == NULL)
+		{
+			_root = new Node(key);
+			_root->_col = BLANK;
+			cout << "树空时插入：" << _root->_key << endl;
+			return true;
+		}
+
+		//不为空
+		Node* cur = _root;
+		Node* parent = cur->_prev;
+		while (cur)
+		{
+			if (cur->_key < key)
+			{
+				parent = cur;
+				cur = cur->_right;
+			}
+			else if (cur->_key>key)
+			{
+				parent = cur;
+				cur = cur->_left;
+			}
+			else
+			{
+				cout << "插入的元素已存在" << endl;
+				return false;
+			}
+		}
+
+		//创建新节点
+		cur = new Node(key);
+
+		//2.父节点是黑节点
+		if (parent->_col == BLANK)
+		{
+			if (parent->_key < key)
+			{
+				parent->_right = cur;
+				cur->_prev = parent;
+				cout << "父为黑，在右子树插入：" << cur->_key << endl;
+			}
+			else
+			{
+				parent->_left = cur;
+				cur->_prev = parent;
+				cout << "父为黑，在左子树插入：" << cur->_key << endl;
+
+			}
+			return true;
+		}
+
+		//3.父节点是红色的，看叔叔结点
+		while (parent&&parent->_col == RED)
+		{
+			Node* Grandfather = parent->_prev;
+			Node* Uncle = Grandfather->_left;
+			if (Grandfather->_left == parent)
+			{
+				Uncle = Grandfather->_right;
+			}
+			//在左边插入
+			if (Grandfather->_left == parent) //父亲为左结点
+			{
+
+				if (parent->_key > key)
+				{
+					//右旋
+					parent->_left = cur;
+					cur->_prev = parent;
+
+					if (Uncle&&Uncle->_col == RED)//叔叔为红情况
+					{
+						cout << "父亲为左子树,父为红,在父左树插入:" << cur->_key << ",         ";
+					}
+					else//叔叔为空或者叔叔为黑两种情况
+					{
+						cout << "父亲为左子树,父为红,在父左树插入:" << cur->_key << ",然后右旋,";
+						_RotateR(Grandfather);
+					}
+				}
+				else
+				{
+					parent->_right = cur;
+					cur->_prev = parent;
+					if (Uncle&&Uncle->_col == RED)
+					{
+						cout << "父亲为左子树,父为红,在父右树插入:" << cur->_key << ",        ";
+					}
+					else
+					{
+						cout << "父亲为左子树,父为红,在父右树插入:" << cur->_key << ",左右双旋,";
+						_RotateL(parent);
+						_RotateR(Grandfather);
+					}
+				}
+			}
+			else //父亲为右结点
+			{
+				if (parent->_col > key) //cur在父结点左边插入，右旋
+				{
+					//右左双旋
+					cur->_prev = parent;
+					parent->_left = cur;
+
+					if (Uncle&&Uncle->_col == RED)
+					{
+						cout << "父亲为右子树,父为红,在父左树插入:" << cur->_key<<",        ";
+					}
+					else
+					{
+						cout << "父亲为右子树,父为红,在父左树插入:" << cur->_key<<",右左双旋,";
+
+						_RotateR(parent);
+						_RotateL(Grandfather);
+					}
+
+				}
+				else//cur在父节点在右边插入          
+				{
+					//左单旋
+					cur->_prev = parent;
+					parent->_right = cur;
+					if (Uncle&&Uncle->_col == RED)
+					{
+						cout << "父亲为右子树,父为红,在父右树插入:" << cur->_key <<",         ";				
+					}
+					else
+					{
+						cout << "父亲为右子树,父为红,在父右树插入:" << cur->_key <<",然后左旋,";
+						_RotateL(Grandfather);
+					}
+				}
+			}
+			//叔叔为空
+			if (Uncle == NULL)
+			{
+				cout << "(u不存在的情况)" << endl;
+				Grandfather->_col = RED;
+				parent->_col = BLANK;
+			}
+			else //叔叔不为空(叔叔为红或者黑)
+			{
+				if (Uncle->_col == RED)
+				{
+					cout << "(u存在且为红情况)" << endl;
+				}
+				else
+				{
+					cout << "(u存在且为黑情况)" << endl;
+				}
+				Grandfather->_col = RED;
+				parent->_col = BLANK;
+				Uncle->_col = BLANK;
+			}
+
+			cur = Grandfather;
+			parent = cur->_prev;
+			if (cur == _root)
+				_root->_col = BLANK;
+		}
+	}
+
+	bool Remove(const K& key);
+	Node* Find(const K& key)
+	{
+		if (_root == NULL)
+		{
+			return NULL;
+		}
+		Node* cur = _root;
+		while (cur)
+		{
+			if (cur->_key > key)
+			{
+				cur = cur->_left;
+			}
+			else if (cur->_key<key)
+			{
+				cur = cur->_right;
+			}
+			else
+			{
+				return cur;
+			}
+		}
+		return NULL;
+	}
+	void InOder()
+	{
+		_InOder(_root);
+		cout << endl;
+	}
+	bool IsRBTree()
+	{
+		if (_root == NULL)
+			return true;
+
+		if (_root->_col != BLANK)
+			return false;
+
+		Node* cur = _root;
+		size_t count = 0;
+		while (cur)
+		{
+			if (cur->_col == BLANK)
+			    count++;
+
+			cur = cur->_left;
+		}
+		size_t sum = 0;
+		return _IsRBTree(_root,sum,count);
+
+	}
+
+protected:
+	void _InOder(Node* root)
+	{
+		if (root == NULL)
+		{
+			return;
+		}
+
+		_InOder(root->_left);
+		cout << root->_key << " ";
+		_InOder(root->_right);
+	}
+	bool _IsRBTree(Node* root,size_t sum, const size_t count)
+	{
+		if (root == NULL)
+			return true;
+
+		if (root->_prev!=NULL)
+		{
+			if ((root->_col == RED)&&(root->_prev->_col== RED))
+				return false;
+		}
+
+		if (root->_col ==BLANK)
+		{
+			++sum;
+		}
+		_IsRBTree(root->_left, sum, count);
+		if (root->_left == NULL&&sum != count)
+			return false;
+
+		_IsRBTree(root->_right, sum, count);
+		if (root->_right == NULL&&sum != count)
+			return false;
+
+		//return true;
+
+	}
+	void _RotateL(Node*& root)
+	{
+		Node* SubR = root->_right;
+		Node* SubRL = SubR->_left;
+		
+		Node* ppNode = root->_prev;
+
+		root->_right = SubRL;
+		if (SubRL != NULL)
+			SubRL->_prev = root;
+
+		root->_prev = SubR;
+		SubR->_left = root;
+
+		if (ppNode == NULL)
+		{
+			_root = SubR;
+			_root->_prev = NULL;
+		}
+		else
+		{
+			SubR->_prev = ppNode;
+			if (ppNode->_left == root)
+			{
+				ppNode->_left = SubR;
+
+			}
+			else
+			{
+				ppNode->_right = SubR;
+			}
+		}
+	}
+	void _RotateR(Node*& root)
+	{
+		Node* SubL = root->_left;
+		Node* SubLR = SubL->_right;
+		Node* ppNode = root->_prev;
+
+		root->_left = SubLR;
+		if (SubLR == NULL)
+			SubLR->_prev = SubL;
+
+		SubL->_right = root;
+		root->_prev = SubL;
+
+		if (ppNode == NULL)
+		{
+			_root = SubL;
+			_root->_prev = NULL;
+		}
+		else
+		{
+			SubL->_prev = ppNode;
+			if (ppNode->_left == SubL)
+			{
+				ppNode->_left = SubL;
+			}
+			else
+			{
+				ppNode->_right = SubL;
+			}
+		}
+	}
+private:
+	Node* _root;
+};
+
+void TestRBTree()
+{
+	RBTree<int> t;
+	int arr[] = { 1, 2,3, 4, 5, 6, 7, 8, 9, 10 };
+	for (size_t i = 0; i <10 ; i++)
+	{
+		t.Insert(arr[i]);
+	}
+	cout << "是否是红黑树：";
+	if (t.IsRBTree())
+		cout << "yes" << endl;
+	else
+		cout << "no" << endl;
+	t.InOder();
+	cout << "值"<<t.Find(5)->_key << "颜色：" << t.Find(5)->_col << endl;
+
+}
+
+#endif 
