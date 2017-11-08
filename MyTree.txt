@@ -16,6 +16,7 @@
 #ifndef  _MYTree_H__
 #define  _MYTree_H__
 
+#include<utility>
 #include<iostream>
 using namespace std;
 
@@ -44,9 +45,9 @@ struct RBTreeNode
 };
 
 template<class V, class Ptr, class Ref>
-struct RBTreeItreator
+struct RBTreeIterator
 {
-	typedef RBTreeItreator<V, Ptr, Ref> Self;
+	typedef RBTreeIterator<V, Ptr, Ref> Self;
 	typedef RBTreeNode<V> Node;
 
 	Node* _node;
@@ -64,15 +65,16 @@ struct RBTreeItreator
 	}
 	Ref operator*()
 	{
-		retrun _it->_value;
+		retrun _node->_value;
 	}
-
+	
 	Ptr operator->()
 	{
-		return &(_it->_value);
+		return &(_node->_value);
 	}
 	Self& operator++()
 	{
+		assert(_node);
 		Node* cur = _node;
 		Node* curR = cur->_right;
 		if (curR != NULL)
@@ -95,6 +97,18 @@ struct RBTreeItreator
 		}
 		return *this;
 	}
+	//Self& operator--()
+	//{
+	//	assert(_node);
+	//	Node* cur = _node;
+	//	if (cur->_left != NULL)
+	//	{
+	//		Node* curL = cur->_left;
+	//		while ()
+	//		{
+	//		}
+	//	}
+	//}
 	
 };
 
@@ -103,6 +117,7 @@ class RBTree
 {
 	typedef RBTreeNode<V> Node;
 public:
+	typedef RBTreeIterator<V, V*，V&> Iterator;
 	RBTree()
 		:_root(NULL)
 	{}
@@ -110,12 +125,15 @@ public:
 	pair<Iterator, bool> Insert(const V& value)
 	{
 		//空
+		pair<Iterator, bool> Pair;
 		if (_root == NULL)
 		{
 			_root = new Node(value);
 			_root->_col = BLANK;
 			cout << "树空时插入：" << _root->_value << endl;
-			return true;
+			Pair.first = Iterator(_root);
+			Pair.second = true;
+			return Pair;
 		}
 
 		//不为空
@@ -136,7 +154,8 @@ public:
 			else
 			{
 				cout << "插入的元素已存在" << endl;
-				return false;
+				Pair.first = Iterator(cur);
+				return Pair;
 			}
 		}
 
@@ -193,7 +212,7 @@ public:
 				}
 				else
 				{
-					parent->_right = cur;
+					parent->_r ight = cur;
 					cur->_prev = parent;
 					if (Uncle&&Uncle->_col == RED)
 					{
@@ -448,6 +467,6 @@ private:
 //	cout << "值" << t.Find(5)->_key << "颜色：" << t.Find(5)->_col << endl;
 //
 //}
-//
+
 
 #endif 
