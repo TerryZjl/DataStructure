@@ -35,6 +35,7 @@ struct RBTreeNode
 	RBTreeNode<V>* _right;
 	RBTreeNode<V>* _prev;
 
+
 	RBTreeNode(const V& value)
 		:_value(value)
 		, _col(RED)
@@ -51,7 +52,9 @@ struct RBTreeIterator
 	typedef RBTreeNode<V> Node;
 
 	Node* _node;
-
+	RBTreeIterator()
+		:_node(NULL)
+	{}
 	RBTreeIterator(Node* node)
 		:_node(node)
 	{}
@@ -63,23 +66,37 @@ struct RBTreeIterator
 		}
 		return *this;
 	}
+	bool operator!=(const Self& It)
+	{
+		if (_node != It._node)
+		{
+			return true;
+		}
+		return false;
+	}
+	bool operator==(const Self& It)
+	{
+		return !(operator!=(It));
+	}
 	Ref operator*()
 	{
-		retrun _node->_value;
+		return _node->_value;
 	}
 	
 	Ptr operator->()
 	{
 		return &(_node->_value);
 	}
+
 	Self& operator++()
 	{
 		assert(_node);
+
 		Node* cur = _node;
-		Node* curR = cur->_right;
-		if (curR != NULL)
+		if (cur->_right != NULL)
 		{
-			while (curR->_left != NULL)
+			Node* curR = cur->_right;
+			while (curR->_left)
 			{
 				curR = curR->_left;
 			}
@@ -87,16 +104,22 @@ struct RBTreeIterator
 		}
 		else
 		{
-			Node* Prev = cur->_parent;
-			while (Prev&&cur != Prev->_left)
+			Node* Prev = cur->_prev;
+			while (Prev != NULL)
 			{
+				if (Prev->_left == cur)
+				{
+					_node = Prev;
+					return *this;
+				}
 				cur = Prev;
-				Prev = cur->_parent;
+				Prev = cur->_prev;
 			}
-			_node = Prev;
+			_node = NULL;
 		}
 		return *this;
 	}
+
 	//Self& operator--()
 	//{
 	//	assert(_node);
@@ -112,12 +135,12 @@ struct RBTreeIterator
 	
 };
 
-template<class K,class V,class KOFV>
+template<class K,class V>
 class RBTree
 {
 	typedef RBTreeNode<V> Node;
 public:
-	typedef RBTreeIterator<V, V*£¬V&> Iterator;
+	typedef RBTreeIterator<V, V*, V&>  Iterator;
 	RBTree()
 		:_root(NULL)
 	{}
@@ -131,9 +154,7 @@ public:
 			_root = new Node(value);
 			_root->_col = BLANK;
 			cout << "Ê÷¿ÕÊ±²åÈë£º" << _root->_value << endl;
-			Pair.first = Iterator(_root);
-			Pair.second = true;
-			return Pair;
+			return make_pair(Iterator(_root),true);
 		}
 
 		//²»Îª¿Õ
@@ -141,12 +162,12 @@ public:
 		Node* parent = cur->_prev;
 		while (cur)
 		{
-			if (cur->_value < value)
+			if (cur->_value < value) //key of value
 			{
 				parent = cur;
 				cur = cur->_right;
 			}
-			else if (cur->_value>value)
+			else if (cur->_value>value) //key of value
 			{
 				parent = cur;
 				cur = cur->_left;
@@ -154,8 +175,7 @@ public:
 			else
 			{
 				cout << "²åÈëµÄÔªËØÒÑ´æÔÚ" << endl;
-				Pair.first = Iterator(cur);
-				return Pair;
+				return make_pair(Iterator(cur),false);
 			}
 		}
 
@@ -165,7 +185,7 @@ public:
 		//2.¸¸½ÚµãÊÇºÚ½Úµã
 		if (parent->_col == BLANK)
 		{
-			if (parent->_value < value)
+			if (parent->_value < value) //key of value
 			{
 				parent->_right = cur;
 				cur->_prev = parent;
@@ -178,7 +198,7 @@ public:
 				cout << "¸¸ÎªºÚ£¬ÔÚ×ó×ÓÊ÷²åÈë£º" << cur->_value << endl;
 
 			}
-			return true;
+			return make_pair(Iterator(cur),true);
 		}
 
 		//3.¸¸½ÚµãÊÇºìÉ«µÄ£¬¿´ÊåÊå½áµã
@@ -194,7 +214,7 @@ public:
 			if (Grandfather->_left == parent) //¸¸Ç×Îª×ó½áµã
 			{
 
-				if (parent->_key > key)
+				if (parent->_value > value)  //key of value
 				{
 					//ÓÒÐý
 					parent->_left = cur;
@@ -202,25 +222,25 @@ public:
 
 					if (Uncle&&Uncle->_col == RED)//ÊåÊåÎªºìÇé¿ö
 					{
-						cout << "¸¸Ç×Îª×ó×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸×óÊ÷²åÈë:" << cur->_key << ",         ";
+						cout << "¸¸Ç×Îª×ó×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸×óÊ÷²åÈë:" << cur->_value << ",         ";
 					}
 					else//ÊåÊåÎª¿Õ»òÕßÊåÊåÎªºÚÁ½ÖÖÇé¿ö
 					{
-						cout << "¸¸Ç×Îª×ó×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸×óÊ÷²åÈë:" << cur->_key << ",È»ºóÓÒÐý,";
+						cout << "¸¸Ç×Îª×ó×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸×óÊ÷²åÈë:" << cur->_value << ",È»ºóÓÒÐý,";
 						_RotateR(Grandfather);
 					}
 				}
 				else
 				{
-					parent->_r ight = cur;
+					parent->_right = cur;
 					cur->_prev = parent;
 					if (Uncle&&Uncle->_col == RED)
 					{
-						cout << "¸¸Ç×Îª×ó×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸ÓÒÊ÷²åÈë:" << cur->_key << ",        ";
+						cout << "¸¸Ç×Îª×ó×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸ÓÒÊ÷²åÈë:" << cur->_value << ",        ";
 					}
 					else
 					{
-						cout << "¸¸Ç×Îª×ó×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸ÓÒÊ÷²åÈë:" << cur->_key << ",×óÓÒË«Ðý,";
+						cout << "¸¸Ç×Îª×ó×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸ÓÒÊ÷²åÈë:" << cur->_value << ",×óÓÒË«Ðý,";
 						_RotateL(parent);
 						_RotateR(Grandfather);
 					}
@@ -228,7 +248,7 @@ public:
 			}
 			else //¸¸Ç×ÎªÓÒ½áµã
 			{
-				if (parent->_col > key) //curÔÚ¸¸½áµã×ó±ß²åÈë£¬ÓÒÐý
+				if (parent->_value > value) //curÔÚ¸¸½áµã×ó±ß²åÈë£¬ÓÒÐý   //key of value
 				{
 					//ÓÒ×óË«Ðý
 					cur->_prev = parent;
@@ -236,11 +256,11 @@ public:
 
 					if (Uncle&&Uncle->_col == RED)
 					{
-						cout << "¸¸Ç×ÎªÓÒ×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸×óÊ÷²åÈë:" << cur->_key << ",        ";
+						cout << "¸¸Ç×ÎªÓÒ×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸×óÊ÷²åÈë:" << cur->_value << ",        ";
 					}
 					else
 					{
-						cout << "¸¸Ç×ÎªÓÒ×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸×óÊ÷²åÈë:" << cur->_key << ",ÓÒ×óË«Ðý,";
+						cout << "¸¸Ç×ÎªÓÒ×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸×óÊ÷²åÈë:" << cur->_value << ",ÓÒ×óË«Ðý,";
 
 						_RotateR(parent);
 						_RotateL(Grandfather);
@@ -254,11 +274,11 @@ public:
 					parent->_right = cur;
 					if (Uncle&&Uncle->_col == RED)
 					{
-						cout << "¸¸Ç×ÎªÓÒ×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸ÓÒÊ÷²åÈë:" << cur->_key << ",         ";
+						cout << "¸¸Ç×ÎªÓÒ×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸ÓÒÊ÷²åÈë:" << cur->_value << ",         ";
 					}
 					else
 					{
-						cout << "¸¸Ç×ÎªÓÒ×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸ÓÒÊ÷²åÈë:" << cur->_key << ",È»ºó×óÐý,";
+						cout << "¸¸Ç×ÎªÓÒ×ÓÊ÷,¸¸Îªºì,ÔÚ¸¸ÓÒÊ÷²åÈë:" << cur->_value << ",È»ºó×óÐý,";
 						_RotateL(Grandfather);
 					}
 				}
@@ -293,7 +313,8 @@ public:
 	}
 
 	bool Remove(const K& key);
-	Node* Find(const K& key)
+
+	Iterator Find(const K& key)	
 	{
 		if (_root == NULL)
 		{
@@ -302,11 +323,11 @@ public:
 		Node* cur = _root;
 		while (cur)
 		{
-			if (cur->_key > key)
+			if (cur->_value > key)
 			{
 				cur = cur->_left;
 			}
-			else if (cur->_key<key)
+			else if (cur->_value<key)
 			{
 				cur = cur->_right;
 			}
@@ -344,6 +365,22 @@ public:
 
 	}
 
+
+	Iterator& Begin()
+	{
+		if (_root == NULL)
+			return Iterator();
+		Node* cur = _root;
+		while (cur->_left)
+		{
+			cur = cur->_left;
+		}
+		return Iterator(cur);
+	}
+	Iterator End()
+	{
+		return Iterator();
+	}
 protected:
 	void _InOder(Node* root)
 	{
@@ -353,7 +390,7 @@ protected:
 		}
 
 		_InOder(root->_left);
-		cout << root->_key << " ";
+		cout << root->_value << " ";
 		_InOder(root->_right);
 	}
 	bool _IsRBTree(Node* root, size_t sum, const size_t count)
@@ -450,23 +487,23 @@ private:
 	Node* _root;
 };
 
-//void TestRBTree()
-//{
-//	RBTree<int> t;
-//	int arr[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-//	for (size_t i = 0; i <10; i++)
-//	{
-//		t.Insert(arr[i]);
-//	}
-//	cout << "ÊÇ·ñÊÇºìºÚÊ÷£º";
-//	if (t.IsRBTree())
-//		cout << "yes" << endl;
-//	else
-//		cout << "no" << endl;
-//	t.InOder();
-//	cout << "Öµ" << t.Find(5)->_key << "ÑÕÉ«£º" << t.Find(5)->_col << endl;
-//
-//}
+void TestMyRBTree()
+{
+	//key
+	RBTree<int,int> t1;
+	int arr[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+	for (size_t i = 0; i <10; i++)
+	{
+		t1.Insert(arr[i]);
+	}
+	RBTree<int, int>::Iterator it1 = t1.Begin();
+	while (it1 != t1.End())
+	{
+		cout << *it1 << " ";
+		++it1;
+	}
+	cout << endl;
+}
 
 
 #endif 
