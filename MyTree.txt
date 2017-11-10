@@ -120,22 +120,35 @@ struct RBTreeIterator
 		return *this;
 	}
 
-	//Self& operator--()
-	//{
-	//	assert(_node);
-	//	Node* cur = _node;
-	//	if (cur->_left != NULL)
-	//	{
-	//		Node* curL = cur->_left;
-	//		while ()
-	//		{
-	//		}
-	//	}
-	//}
-	
+
+	Self& operator--()
+	{
+		assert(_node);
+		Node* cur = _node;
+		if (cur->_left != NULL)
+		{
+			Node* curL = cur->_left;
+			while (curL->_right)
+			{
+				curL = curL->_right;
+			}
+			_node = curL;
+		}
+		else
+		{
+			Node* parent = cur->_prev;
+			while (parent && parent->_right != cur)
+			{
+				cur = parent;
+				parent = cur->_prev;
+			}
+			_node = parent;
+		}
+		return *this;
+	}
 };
 
-template<class K,class V>
+template<class K,class V,class KeyOfValue>
 class RBTree
 {
 	typedef RBTreeNode<V> Node;
@@ -149,11 +162,12 @@ public:
 	{
 		//空
 		pair<Iterator, bool> Pair;
+		KeyOfValue kov;
 		if (_root == NULL)
 		{
 			_root = new Node(value);
 			_root->_col = BLANK;
-			cout << "树空时插入：" << _root->_value << endl;
+			cout << "树空时插入：" << kov(_root->_value) << endl;
 			return make_pair(Iterator(_root),true);
 		}
 
@@ -162,16 +176,17 @@ public:
 		Node* parent = cur->_prev;
 		while (cur)
 		{
-			if (cur->_value < value) //key of value
+			if (kov(cur->_value) < kov(value)) //key of value
 			{
 				parent = cur;
 				cur = cur->_right;
 			}
-			else if (cur->_value>value) //key of value
+			else if (kov(cur->_value)>kov(value)) //key of value
 			{
 				parent = cur;
 				cur = cur->_left;
 			}
+			
 			else
 			{
 				cout << "插入的元素已存在" << endl;
@@ -189,13 +204,13 @@ public:
 			{
 				parent->_right = cur;
 				cur->_prev = parent;
-				cout << "父为黑，在右子树插入：" << cur->_value << endl;
+				cout << "父为黑，在右子树插入：" << kov(cur->_value) << endl;
 			}
 			else
 			{
 				parent->_left = cur;
 				cur->_prev = parent;
-				cout << "父为黑，在左子树插入：" << cur->_value << endl;
+				cout << "父为黑，在左子树插入：" << kov(cur->_value) << endl;
 
 			}
 			return make_pair(Iterator(cur),true);
@@ -205,16 +220,20 @@ public:
 		while (parent&&parent->_col == RED)
 		{
 			Node* Grandfather = parent->_prev;
-			Node* Uncle = Grandfather->_left;
-			if (Grandfather->_left == parent)
+			Node* Uncle = NULL;
+			if (Grandfather != NULL)
 			{
-				Uncle = Grandfather->_right;
+				Uncle = Grandfather->_left;
+				if (Grandfather->_left == parent)
+				{
+					Uncle = Grandfather->_right;
+				}
 			}
 			//在左边插入
 			if (Grandfather->_left == parent) //父亲为左结点
 			{
 
-				if (parent->_value > value)  //key of value
+				if (kov(parent->_value) > kov(value))  //key of value
 				{
 					//右旋
 					parent->_left = cur;
@@ -222,11 +241,11 @@ public:
 
 					if (Uncle&&Uncle->_col == RED)//叔叔为红情况
 					{
-						cout << "父亲为左子树,父为红,在父左树插入:" << cur->_value << ",         ";
+						cout << "父亲为左子树,父为红,在父左树插入:" << kov(cur->_value) << ",         ";
 					}
 					else//叔叔为空或者叔叔为黑两种情况
 					{
-						cout << "父亲为左子树,父为红,在父左树插入:" << cur->_value << ",然后右旋,";
+						cout << "父亲为左子树,父为红,在父左树插入:" << kov(cur->_value) << ",然后右旋,";
 						_RotateR(Grandfather);
 					}
 				}
@@ -236,19 +255,20 @@ public:
 					cur->_prev = parent;
 					if (Uncle&&Uncle->_col == RED)
 					{
-						cout << "父亲为左子树,父为红,在父右树插入:" << cur->_value << ",        ";
+						cout << "父亲为左子树,父为红,在父右树插入:" << kov(cur->_value) << ",        ";
 					}
 					else
 					{
-						cout << "父亲为左子树,父为红,在父右树插入:" << cur->_value << ",左右双旋,";
+						cout << "父亲为左子树,父为红,在父右树插入:" << kov(cur->_value) << ",左右双旋,";
 						_RotateL(parent);
+						parent = cur;
 						_RotateR(Grandfather);
 					}
 				}
 			}
 			else //父亲为右结点
 			{
-				if (parent->_value > value) //cur在父结点左边插入，右旋   //key of value
+				if (kov(parent->_value) > kov(value)) //cur在父结点左边插入，右旋   //key of value
 				{
 					//右左双旋
 					cur->_prev = parent;
@@ -256,13 +276,14 @@ public:
 
 					if (Uncle&&Uncle->_col == RED)
 					{
-						cout << "父亲为右子树,父为红,在父左树插入:" << cur->_value << ",        ";
+						cout << "父亲为右子树,父为红,在父左树插入:" << kov(cur->_value) << ",        ";   // key of value
 					}
 					else
 					{
-						cout << "父亲为右子树,父为红,在父左树插入:" << cur->_value << ",右左双旋,";
+						cout << "父亲为右子树,父为红,在父左树插入:" << kov(cur->_value) << ",右左双旋,";  //key of value 
 
 						_RotateR(parent);
+						parent = cur; //双旋时，第一次旋转完毕后，此时的parent位置就是原来的cur了，所以把cur 赋给parent，方便后面的变色。
 						_RotateL(Grandfather);
 					}
 
@@ -274,11 +295,11 @@ public:
 					parent->_right = cur;
 					if (Uncle&&Uncle->_col == RED)
 					{
-						cout << "父亲为右子树,父为红,在父右树插入:" << cur->_value << ",         ";
+						cout << "父亲为右子树,父为红,在父右树插入:" << kov(cur->_value) << ",         ";
 					}
 					else
 					{
-						cout << "父亲为右子树,父为红,在父右树插入:" << cur->_value << ",然后左旋,";
+						cout << "父亲为右子树,父为红,在父右树插入:" << kov(cur->_value) << ",然后左旋,";
 						_RotateL(Grandfather);
 					}
 				}
@@ -314,8 +335,9 @@ public:
 
 	bool Remove(const K& key);
 
-	Iterator Find(const K& key)	
+	Iterator Find(const K& key)	const
 	{
+		KeyOfValue kov;
 		if (_root == NULL)
 		{
 			return NULL;
@@ -323,11 +345,11 @@ public:
 		Node* cur = _root;
 		while (cur)
 		{
-			if (cur->_value > key)
+			if (kov(cur->_value) > key)
 			{
 				cur = cur->_left;
 			}
-			else if (cur->_value<key)
+			else if (kov(cur->_value)<key)
 			{
 				cur = cur->_right;
 			}
@@ -366,7 +388,7 @@ public:
 	}
 
 
-	Iterator& Begin()
+	Iterator Begin()
 	{
 		if (_root == NULL)
 			return Iterator();
@@ -459,8 +481,8 @@ protected:
 		Node* ppNode = root->_prev;
 
 		root->_left = SubLR;
-		if (SubLR == NULL)
-			SubLR->_prev = SubL;
+		if (SubLR != NULL)
+			SubLR->_prev = root;
 
 		SubL->_right = root;
 		root->_prev = SubL;
@@ -487,23 +509,34 @@ private:
 	Node* _root;
 };
 
-void TestMyRBTree()
-{
-	//key
-	RBTree<int,int> t1;
-	int arr[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-	for (size_t i = 0; i <10; i++)
-	{
-		t1.Insert(arr[i]);
-	}
-	RBTree<int, int>::Iterator it1 = t1.Begin();
-	while (it1 != t1.End())
-	{
-		cout << *it1 << " ";
-		++it1;
-	}
-	cout << endl;
-}
+//void TestMyRBTree()
+//{
+//	//key
+//	RBTree<int,int> t1;
+//	int arr[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+//	for (size_t i = 0; i <10; i++)
+//	{
+//		t1.Insert(arr[i]);
+//	}
+//	RBTree<int, int>::Iterator it1 = t1.Begin();
+//	while (it1 != t1.End())
+//	{
+//		cout << *it1 << " ";
+//		++it1;
+//		if (*it1 == 10)
+//		{
+//			break;
+//		}
+//	}
+//	cout << endl;
+//	while (it1 != t1.End())
+//	{
+//		cout << *it1 << " ";
+//		--it1;
+//
+//	}
+//	cout << endl;
+//}
 
 
 #endif 
