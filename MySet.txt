@@ -1,16 +1,67 @@
-
 #ifndef _MYSET_H_
 #define _MYSET_H_
+
+#include<iostream>
+#include"MyTree.h"
+using namespace std;
+
+template<class K>
+struct KeyOfKey
+{
+	K operator()(const K& key)
+	{
+		return key;
+	}
+};
 
 template<class K>
 class MySet
 {
 	typedef K KeyType;
 	typedef K ValueType;
-	typedef  RBTreeNode<KeyType,ValueType> RBNode;
-public:
+	typedef RBTree<KeyType, ValueType,KeyOfKey<KeyType>> SetNode;
 
+public:
+	typedef typename SetNode::Iterator  Iterator;  //因为SetNode是模板类型，且还没有实例化，因此要用他得使用typename
+	//typedef RBTreeIterator<ValueType, ValueType*, ValueType&> Iterator;
+	
+	pair<Iterator,bool> Insert(const ValueType& key)
+	{
+		return _node.Insert(key);
+	}
+	Iterator Find(const KeyType& key)
+	{
+		return _node.Find(key);
+	}
+	Iterator Begin()
+	{
+		return _node.Begin();
+	}
+	Iterator End()
+	{
+		return Iterator();
+	}
 private:
-	RBNode* _node;
+	SetNode _node;
 };
+
+void TestMySet()
+{
+	MySet<int> set;
+	int arr[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+	for (int i = 0; i < 10; i++)
+	{
+		set.Insert(arr[i]);
+	}
+	MySet<int>::Iterator it1 = set.Begin();
+	while (it1 != set.End())
+	{
+		cout << *it1 << " ";
+		++it1;
+	}
+	cout << endl;
+	it1 = set.Begin();
+	it1 = set.Find(5);
+	cout << *it1 << endl;  
+}
 #endif
