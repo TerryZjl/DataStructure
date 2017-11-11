@@ -48,7 +48,7 @@ public:
 	HashTable()
 		:_size(0)
 	{}
-	void Insert(const pair<K, V>& x)
+	bool Insert(const pair<K, V>& x)
 	{
 		Capacity();
 
@@ -56,8 +56,12 @@ public:
 		size_t index = HashFunc(x.first);
 		size_t i = 1;
 		int num = index; //保存第一次计算的下标位置，方便二次探测
-		while (i<len&&_v[index]._state == EXIST)
+		while (_v[index]._state == EXIST)
 		{
+			if(_v[index]._kv.first == x.first)//不允许Key值冗余
+			{
+				return false;
+			}
 			//线性探测
 			//++index;
 			//++i;
@@ -65,20 +69,21 @@ public:
 			//	index = index%len;
 
 			//二次探测
-		
-	 		index = num + (i*i);
+
+			index = num + (i*i);
 			++i;
 			if (index == len)
 				index = index%len;
 		}
 		if (_v[index]._state == EXIST)
 		{
-			cout << "插入失败" << endl;
+			return false;
 		}
 		else
 		{
 			_v[index]._kv = x;
 			_v[index]._state = EXIST;
+			return true;
 		}
 	}
 	void Capacity()
@@ -86,14 +91,14 @@ public:
 		size_t TableLen = _v.size();
 		if (TableLen == 0)   //如果表长为0，则直接增容
 		{
-			size_t NewTableLen =  GetCapacity(TableLen);
+			size_t NewTableLen = GetCapacity(TableLen);
 			_v.resize(NewTableLen);
 			return;
 		}
 		if ((_size * 10) / (TableLen * 10) > 7)  //计算增容并深拷贝数据
 		{
 			size_t NewTableLen = GetCapacity(TableLen);
-			HashTable<K,V> NewHt;
+			HashTable<K, V> NewHt;
 			NewHt._v.resize(NewTableLen);
 			for (int i = 0; i < TableLen; i++)
 			{
@@ -120,6 +125,33 @@ public:
 		return _PrimeList[i - 1];
 	}
 
+	Node Find(const K& key)
+	{
+		size_t index = HashFunc(key);
+		size_t len = _v.size();
+		int i = 0;
+		while (i<len&&_v[index]._kv.first != key)
+		{
+			//线性探测
+			++index;
+			if (index == len)
+				index = index%len;
+		}
+		
+		if (_v[index]._kv.first != key)
+		{
+			return _v[index];
+		}
+		else
+		{
+			return NULL;
+		}
+
+	}
+	bool Erase()
+	{
+
+	}
 	size_t HashFunc(const K& x)
 	{
 		return x % _v.size();
@@ -144,6 +176,8 @@ void TestHashTable()
 	ht.Insert(make_pair(3, 2));
 	ht.Insert(make_pair(3, 2));
 	ht.Insert(make_pair(17, 2));
+	HashNode<int,int> ret = ht.Find(17);
+	cout << ret._kv.first << ret._kv.second << endl;
 }
 
 #endif //_HASHTABLE_H_
