@@ -1,0 +1,74 @@
+#ifndef _HASHTABLE_H_
+#define _HASHTABLE_H_
+
+#include<iostream>
+#include<vector>
+using namespace std;
+
+//使用素数表对齐做哈希表的容量，降低哈希冲突
+const int _PrimeSize = 28;
+static const unsigned long _PrimeList[_PrimeSize] =
+{
+	53ul, 97ul, 193ul, 389ul, 769ul,
+	1543ul, 3079ul, 6151ul, 12289ul, 24593ul,
+	49157ul, 98317ul, 196613ul, 393241ul,
+	786433ul,
+	1572869ul, 3145739ul, 6291469ul, 12582917ul,
+	25165843ul,
+	50331653ul, 100663319ul, 201326611ul, 402653189ul,
+	805306457ul,
+	1610612741ul, 3221225473ul, 4294967291ul
+};
+
+//开放定值法
+template<class T>
+class HashTable
+{
+public:
+	HashTable()
+	{
+		_size(0);
+		_v.reserve(53);
+	}
+	void Insert(const T& x)
+	{
+		size_t size = _v.size()+1;
+		size_t TableLen = HashFunc(size);
+		Capacity(size_t TableLen);
+
+
+	}
+	void Capacity(size_t TableLen)
+	{
+		size_t len = _v.capacity();
+		if (len < TableLen)
+		{
+			HashTable<T> NewHt;
+			NewHt._v.reserve(TableLen);
+			for (int i = 0; i < len; i++)
+			{
+				NewHt.Insert(_v[i]);
+			}
+			_v.swap(NewHt._v);
+		}
+	}
+	size_t HashFunc(size_t size)
+	{
+		for (int i = 0; i < 28; i++)
+		{
+			if ((size * 10) / (_PrimeList[i] * 10) <= 7)
+			{
+				return _PrimeList[i];
+			}
+		}
+	}
+private:
+	vector<T> _v;
+	size_t _size;
+};
+
+void TestHashTable()
+{
+	HashTable<int> ht;
+}
+#endif //_HASHTABLE_H_
