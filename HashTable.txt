@@ -60,6 +60,7 @@ public:
 		{
 			if(_v[index]._kv.first == x.first)//不允许Key值冗余
 			{
+				cout << x.first << "已存在，插入失败" << endl;
 				return false;
 			}
 			//线性探测
@@ -75,16 +76,103 @@ public:
 			if (index == len)
 				index = index%len;
 		}
-		if (_v[index]._state == EXIST)
+		_v[index]._kv = x;
+		_v[index]._state = EXIST;
+		++_size;
+		cout << _v[index]._kv.first<< ":插入成功" << endl;
+		return true;
+		
+	}
+
+
+	Node* Find(const K& key)
+	{
+		size_t index = HashFunc(key);
+		size_t len = _v.size();
+		int i = 1;
+		int num = index;
+		while (_v[index]._state != EMPTY)
 		{
-			return false;
+			if (_v[index]._state == EXIST)
+			{
+				if (_v[index]._kv.first == key)
+					return &_v[index];
+			}
+			////线性探测
+			//++index;
+			//if (index == len)
+			//	index = index%len;
+
+			//二次探测
+			index = num + (i*i);
+			++i;
+			if (index == len)
+				index = index%len;
+		}
+		return NULL;
+	}
+	bool Erase(const K& key)
+	{
+		Node* cur = Find(key);
+		if (cur != NULL)
+		{
+			size_t index = cur->_kv.first;
+			_v[index]._state = EMPTY;
+			return true;
+
 		}
 		else
 		{
-			_v[index]._kv = x;
-			_v[index]._state = EXIST;
-			return true;
+			return false;
 		}
+
+		//size_t index = HashFunc(key);
+		//size_t len = _v.size();
+
+		//int i = 1;
+		//int num = index;
+		//while (_v[index]._state != EMPTY)
+		//{
+		//	if (_v[index]._state == EXIST)
+		//	{
+		//		break;
+		//	}
+		//	////线性探测
+		//	//++index;
+		//	//if (index == len)
+		//	//{
+		//	//	index = index%len;
+		//	//}
+		//	//二次探测
+		//	index = num + (i*i);
+		//	++i;
+		//	if (index == len)
+		//		index = index%len;
+		//}
+		//if (_v[index]._state == EXIST)
+		//{
+		//	_v[index]._state = EMPTY;
+		//	_v[index]._kv = make_pair(0, 0);
+		//	return true;
+		//}
+		//else
+		//{
+		//	return false;
+		//}
+	}
+
+	size_t Size()
+	{
+		return _size;
+	}
+	size_t Capacity()
+	{
+		return _v.size();
+	}
+private:
+	size_t HashFunc(const K& x)
+	{
+		return x % _v.size();
 	}
 	void Capacity()
 	{
@@ -124,38 +212,6 @@ public:
 		}
 		return _PrimeList[i - 1];
 	}
-
-	Node Find(const K& key)
-	{
-		size_t index = HashFunc(key);
-		size_t len = _v.size();
-		int i = 0;
-		while (i<len&&_v[index]._kv.first != key)
-		{
-			//线性探测
-			++index;
-			if (index == len)
-				index = index%len;
-		}
-		
-		if (_v[index]._kv.first != key)
-		{
-			return _v[index];
-		}
-		else
-		{
-			return NULL;
-		}
-
-	}
-	bool Erase()
-	{
-
-	}
-	size_t HashFunc(const K& x)
-	{
-		return x % _v.size();
-	}
 private:
 	vector<Node> _v;
 	size_t _size;  //表里面存数据的个数
@@ -176,8 +232,12 @@ void TestHashTable()
 	ht.Insert(make_pair(3, 2));
 	ht.Insert(make_pair(3, 2));
 	ht.Insert(make_pair(17, 2));
-	HashNode<int,int> ret = ht.Find(17);
-	cout << ret._kv.first << ret._kv.second << endl;
+	ht.Erase(17);
+	ht.Insert(make_pair(17,2));
+	HashNode<int,int>* ret = ht.Find(16);
+	if (ret)
+		cout << ret->_kv.first <<":"<< ret->_kv.second << endl;
+
 }
 
 #endif //_HASHTABLE_H_
