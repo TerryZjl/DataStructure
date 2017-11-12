@@ -5,7 +5,37 @@
 #include<vector>
 using namespace std;
 
+///// @brief SDBM Hash Function  
+/// @detail 本算法是由于在开源项目SDBM（一种简单的数据库引擎）中被应用而得名，它与BKDRHash思想一致，只是种子不同而已。  
+template<class T>
+size_t SDBMHash(const T *str)
+{
+	register size_t hash = 0;
+	while (size_t ch = (size_t)*str++)
+	{
+		hash = 65599 * hash + ch;
+		//hash = (size_t)ch + (hash << 6) + (hash << 16) - hash;  
+	}
+	return hash;
+}
 
+template<class K>
+struct Com
+{
+	size_t operator()(const K& key)
+	{
+		return key;
+	}
+};
+
+template<>
+struct Com<string>
+{
+	size_t operator()(const char* key)
+	{
+		return SDBMHash(key);
+	}
+};
 
 //使用素数表对齐做哈希表的容量，降低哈希冲突
 const int _PrimeSize = 28;
@@ -40,7 +70,7 @@ struct HashNode
 	{}
 };
 //开放定值法
-template<class K,class V>
+template<class K,class V,class Compere = Com<K>>
 class HashTable
 {
 	typedef HashNode<K, V> Node;
@@ -50,10 +80,10 @@ public:
 	{}
 	bool Insert(const pair<K, V>& x)
 	{
-		Capacity();
+		AddCapacity();//判断增容，并深拷贝
 
 		size_t len = _v.size();
-		size_t index = HashFunc(x.first);
+		size_t index = HashFunc(x.first);//除留余数法求下标
 		size_t i = 1;
 		int num = index; //保存第一次计算的下标位置，方便二次探测
 		while (_v[index]._state == EXIST)
@@ -70,7 +100,6 @@ public:
 			//	index = index%len;
 
 			//二次探测
-
 			index = num + (i*i);
 			++i;
 			if (index == len)
@@ -119,46 +148,11 @@ public:
 			size_t index = cur->_kv.first;
 			_v[index]._state = EMPTY;
 			return true;
-
 		}
 		else
 		{
 			return false;
 		}
-
-		//size_t index = HashFunc(key);
-		//size_t len = _v.size();
-
-		//int i = 1;
-		//int num = index;
-		//while (_v[index]._state != EMPTY)
-		//{
-		//	if (_v[index]._state == EXIST)
-		//	{
-		//		break;
-		//	}
-		//	////线性探测
-		//	//++index;
-		//	//if (index == len)
-		//	//{
-		//	//	index = index%len;
-		//	//}
-		//	//二次探测
-		//	index = num + (i*i);
-		//	++i;
-		//	if (index == len)
-		//		index = index%len;
-		//}
-		//if (_v[index]._state == EXIST)
-		//{
-		//	_v[index]._state = EMPTY;
-		//	_v[index]._kv = make_pair(0, 0);
-		//	return true;
-		//}
-		//else
-		//{
-		//	return false;
-		//}
 	}
 
 	size_t Size()
@@ -172,14 +166,16 @@ public:
 private:
 	size_t HashFunc(const K& x)
 	{
-		return x % _v.size();
+		Compere hf;
+		string str = x;
+		return hf(str.c_str()) % _v.size();
 	}
-	void Capacity()
+	void AddCapacity()
 	{
 		size_t TableLen = _v.size();
 		if (TableLen == 0)   //如果表长为0，则直接增容
 		{
-			size_t NewTableLen = GetCapacity(TableLen);
+			size_t NewTableLen = GetCapacity(0);
 			_v.resize(NewTableLen);
 			return;
 		}
@@ -198,19 +194,14 @@ private:
 
 	size_t GetCapacity(size_t OldLen)
 	{
-		if (OldLen == 0)
+		for (int i = 0; i < _PrimeSize; i++)
 		{
-			return _PrimeList[0];
-		}
-		int i = 0;
-		for (i = 0; i < 28; i++)
-		{
-			if ((_size * 10) / (_PrimeList[i] * 10) <= 7)
+			if (OldLen < _PrimeList[i])
 			{
 				return _PrimeList[i];
 			}
 		}
-		return _PrimeList[i - 1];
+		return _PrimeList[_PrimeSize-1];
 	}
 private:
 	vector<Node> _v;
@@ -219,24 +210,32 @@ private:
 
 void TestHashTable()
 {
-	HashTable<int,int> ht;
-	ht.Insert(make_pair(1, 2));
-	ht.Insert(make_pair(3, 2));
-	ht.Insert(make_pair(5, 2));
-	ht.Insert(make_pair(7, 2));
-	ht.Insert(make_pair(23, 2));
+	//HashTable<int,int> ht;
+	//ht.Insert(make_pair(1, 2));
+	//ht.Insert(make_pair(3, 2));
+	//ht.Insert(make_pair(5, 2));
+	//ht.Insert(make_pair(7, 2));
+	//ht.Insert(make_pair(23, 2));
 
 
-	ht.Insert(make_pair(3, 2));
-	ht.Insert(make_pair(3, 2));
-	ht.Insert(make_pair(3, 2));
-	ht.Insert(make_pair(3, 2));
-	ht.Insert(make_pair(17, 2));
-	ht.Erase(17);
-	ht.Insert(make_pair(17,2));
-	HashNode<int,int>* ret = ht.Find(16);
+	//ht.Insert(make_pair(3, 2));
+	//ht.Insert(make_pair(3, 2));
+	//ht.Insert(make_pair(3, 2));
+	//ht.Insert(make_pair(3, 2));
+	//ht.Insert(make_pair(17, 2));
+	//ht.Erase(17);
+	//ht.Insert(make_pair(17,2));
+	//HashNode<int,int>* ret = ht.Find(16);
+	//if (ret)
+	//	cout << ret->_kv.first <<":"<< ret->_kv.second << endl;
+	HashTable<string, string> ht2;
+	ht2.Insert(make_pair("张三", "zhangsan"));
+	ht2.Insert(make_pair("李四", "lisi"));
+	ht2.Insert(make_pair("王麻子", "wangmazi"));
+	ht2.Insert(make_pair("字符串", "string"));
+	HashNode<string, string>* ret = ht2.Find("李四");
 	if (ret)
-		cout << ret->_kv.first <<":"<< ret->_kv.second << endl;
+		cout << ret->_kv.second << endl;
 
 }
 
