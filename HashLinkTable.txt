@@ -1,0 +1,239 @@
+#ifndef _HASHTABLE_H_
+#define _HASHTABLE_H_
+
+#include<iostream>
+#include<vector>
+using namespace std;
+
+
+///// @brief SDBM Hash Function  
+/// @detail 本算法是由于在开源项目SDBM（一种简单的数据库引擎）中被应用而得名，它与BKDRHash思想一致，只是种子不同而已。  
+template<class T>
+size_t SDBMHash(const T *str)
+{
+	register size_t hash = 0;
+	while (size_t ch = (size_t)*str++)
+	{
+		hash = 65599 * hash + ch;
+		//hash = (size_t)ch + (hash << 6) + (hash << 16) - hash;  
+	}
+	return hash;
+}
+
+template<class K>
+struct Com
+{
+	size_t operator()(const K& key)
+	{
+		return key;
+	}
+};
+
+template<>
+struct Com<string>
+{
+	size_t operator()(const char* key)
+	{
+		return SDBMHash(key);
+	}
+};
+
+//使用素数表对齐做哈希表的容量，降低哈希冲突
+const int _PrimeSize = 28;
+static const unsigned long _PrimeList[_PrimeSize] =
+{
+	53ul, 97ul, 193ul, 389ul, 769ul,
+	1543ul, 3079ul, 6151ul, 12289ul, 24593ul,
+	49157ul, 98317ul, 196613ul, 393241ul,
+	786433ul,
+	1572869ul, 3145739ul, 6291469ul, 12582917ul,
+	25165843ul,
+	50331653ul, 100663319ul, 201326611ul, 402653189ul,
+	805306457ul,
+	1610612741ul, 3221225473ul, 4294967291ul
+};
+
+
+
+namespace LINK
+{
+	template<class K, class V>
+	struct HashLinkNode
+	{
+		K _k;
+		V _v;
+		HashLinkNode<K,V>* _next;
+		HashLinkNode(const K& k, const V& v)
+			:_k(k)
+			, _v(v)
+			, _next(NULL)
+		{}
+	};
+	template<class K, class V, class HashFunc = Com<K>>
+	class HashTable
+	{
+		typedef HashLinkNode<K, V> Node;
+	public:
+		HashTable()
+			:_size(0)
+		{}
+		bool Insert(const K& key,const V& value)
+		{
+			AddCapacity();
+
+			size_t OldLen = _v.size();
+			size_t index = _HashFunc(key, OldLen);
+
+			Node* cur = _v[index];
+			while (cur)
+			{
+				if (cur->_k == key)
+					return false;
+				cur = cur->_next;
+			}
+
+			Node* NewNode = new Node(key, value);
+			NewNode->_next = _v[index];
+			_v[index] = NewNode;
+			++_size;
+			return true;
+		}
+		Node* Find(const K& key)
+		{
+			size_t index = _HashFunc(key, _v.size());
+			Node* cur = _v[index];
+			while (cur)
+			{
+				if (cur->_k == key)
+					return cur;
+				cur = cur->_next;
+			}
+			return NULL;
+		}
+		bool Remove(const K& key)
+		{
+			size_t index = _HashFunc(key, _v.size());
+
+			Node* prev = NULL;
+			Node*  cur = _v[index];
+
+			while (cur)
+			{
+				if (cur->_k == key)
+				{
+					if (prev == NULL)//头删
+					{
+						_v[index] = cur->_next;
+						delete cur;
+					}
+					else
+					{
+						Node* del = cur;
+						prev->_next = cur->_next;
+						delete del;
+					}
+					--_size;
+					return true;
+				}
+				prev = cur;
+				cur = cur->_next;
+			}
+			return false;
+		}
+
+		size_t Size()
+		{
+			return _size();
+		}
+		size_t Capacity()
+		{
+			return _v.size();
+		}
+		
+	private:
+		void AddCapacity()
+		{
+			size_t OldLen = _v.size();
+			if (OldLen == 0)
+			{
+				size_t NewLen = GetCapacity(0);
+				_v.resize(NewLen);
+				return;
+			}
+			if (_size / OldLen > 1) //增容
+			{
+				size_t NewLen = GetCapacity(OldLen);
+				vector<Node*> tmp;
+				tmp.resize(NewLen);
+				for (int i = 0; i < OldLen; i++)
+				{
+					Node* cur = _v[i];
+					while (cur)
+					{
+						Node* next = cur->_next;
+						size_t index = _HashFunc(cur->_k, OldLen);
+			
+						
+						cur->_next = tmp[index];
+						tmp[index] = cur;
+
+						//if (tmp[index] == NULL)
+						//{
+						//	tmp[index] = cur;
+						//}
+						//else
+						//{
+						//	Node* front = tmp[index];
+						//	cur->_next = front;
+						//	tmp[index] = cur;
+						//}
+						//
+				
+						cur = next;
+					}
+				}
+				_v.swap(tmp);
+			}
+		}
+		size_t GetCapacity(size_t OldLen)
+		{
+			for (int i = 0; i < _PrimeSize; i++)
+			{
+				if (OldLen < _PrimeList[i])
+				{
+					return _PrimeList[i];
+				}
+			}
+			return _PrimeList[_PrimeSize - 1];
+		}
+
+		size_t _HashFunc(size_t size,size_t len)
+		{
+			HashFunc hf;
+			return hf(size) % len;
+		}
+
+	private:
+		vector<Node*> _v;
+		size_t _size;  //表里面存数据的个数
+	};
+};
+
+void TestHashLinkTable()
+{
+	LINK::HashTable<int, int> ht;
+	ht.Insert(1, 2);
+	ht.Insert(3, 2);
+	ht.Insert(15, 2);
+	ht.Insert(24, 2);
+	ht.Insert(41, 2);
+	ht.Insert(54, 2);
+	ht.Insert(2, 2);
+	ht.Insert(5, 2);
+	ht.Insert(6, 2);
+	ht.Remove(6);
+	ht.Remove(54);
+	ht.Remove(1);
+}
+
+#endif //_HASHTABLE_H_
