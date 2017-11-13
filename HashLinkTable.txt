@@ -54,30 +54,124 @@ static const unsigned long _PrimeList[_PrimeSize] =
 };
 
 
-
 namespace LINK
 {
 	template<class K, class V>
 	struct HashLinkNode
 	{
-		K _k;
-		V _v;
+
+		pair<K, V> _kv;
 		HashLinkNode<K,V>* _next;
-		HashLinkNode(const K& k, const V& v)
-			:_k(k)
-			, _v(v)
+		HashLinkNode(const pair<K,V>& kv)
+			:_kv(kv)
 			, _next(NULL)
 		{}
+	};
+	template<class K, class V, class HashFunc = Com<K>> class HashTable;
+	template<class K,class V,class HashFunc = Com<K>>
+	struct HashTableIterator
+	{
+
+		typedef HashLinkNode<K,V> Node;
+		typedef HashTableIterator<K, V,HashFunc> Self;
+		typedef HashTable<K, V, HashFunc> Hash;
+		Hash* _ht; //哈希表
+		Node* _node;  //节点的指针
+
+		HashTableIterator(Node* node, Hash* ht)
+			:_node(node)
+			, _ht(ht)
+		{}
+		Self& operator=(const Self& It)
+		{
+			if (*this != It)
+			{
+				_node = It._node;
+				_ht = It._ht;
+			}
+			return *this;
+		}
+
+		Self& operator++()
+		{
+			Node* cur = _node;
+			if (cur->_next) // 如果哈希桶的下一个位置不为空，则直接走下一个位置。
+			{
+				cur = cur->_next;
+				_node = cur;
+				return *this;
+			}
+			else     //否则，通过key值找到下标，然后++下标，判断哈希表的下一个位置是否有数据。
+			{
+				size_t size = _ht->_v.size();
+				HashFunc hf;
+				size_t index = hf(cur->_kv.first)% size;
+				++index;
+				for (; index < size; index++)
+				{
+					if (_ht->_v[index])
+					{
+						_node = _ht->_v[index];
+						return *this;
+					}
+				}
+				_node = NULL;
+				return *this;
+			}
+		}
+	
+		pair<K, V>& operator*()
+		{
+			return _node->_kv;
+		}
+		pair<K, V>* operator->()
+		{
+			return &(_node->_kv);
+		}
+
+		bool operator!=(const Self& It)
+		{
+			return _node != It._node ? true : false;
+		}
+		bool operator==(const Self& It)
+		{
+			return _node == It._node ? true : false;
+
+		}
+
+		
+
+
 	};
 	template<class K, class V, class HashFunc = Com<K>>
 	class HashTable
 	{
 		typedef HashLinkNode<K, V> Node;
+		
+		friend struct HashTableIterator<K,V,HashFunc>;  //迭代器的哈希表指针成员必须要访问哈希表，但是这个哈希表是私有的，要访问必须设置成友元。
 	public:
+		typedef HashTableIterator<K, V, HashFunc> Iterator;
+		
 		HashTable()
 			:_size(0)
 		{}
-		bool Insert(const K& key,const V& value)
+		Iterator Begin()
+		{
+			for (size_t i = 0; i < _v.size(); i++)
+			{
+				if (_v[i])
+				{
+					return Iterator(_v[i], this);
+				}
+			}
+			return Iterator(NULL, this);
+		}
+
+		Iterator End()
+		{
+			return Iterator(NULL, this);
+		}
+		pair<Iterator,bool> Insert(const K& key,const V& value)
 		{
 			AddCapacity();
 
@@ -87,16 +181,18 @@ namespace LINK
 			Node* cur = _v[index];
 			while (cur)
 			{
-				if (cur->_k == key)
-					return false;
+				if (cur->_kv.first == key)
+					return make_pair(Iterator(cur,this), false);
+					//return false;
 				cur = cur->_next;
 			}
 
-			Node* NewNode = new Node(key, value);
+			pair<K, V> node = make_pair(key, value);
+			Node* NewNode = new Node(node);
 			NewNode->_next = _v[index];
 			_v[index] = NewNode;
 			++_size;
-			return true;
+			return make_pair(Iterator(NewNode,this),true);
 		}
 		Node* Find(const K& key)
 		{
@@ -104,7 +200,7 @@ namespace LINK
 			Node* cur = _v[index];
 			while (cur)
 			{
-				if (cur->_k == key)
+				if (cur->_kv.first == key)
 					return cur;
 				cur = cur->_next;
 			}
@@ -119,7 +215,7 @@ namespace LINK
 
 			while (cur)
 			{
-				if (cur->_k == key)
+				if (cur->_kv.first == key)
 				{
 					if (prev == NULL)//头删
 					{
@@ -171,7 +267,7 @@ namespace LINK
 					while (cur)
 					{
 						Node* next = cur->_next;
-						size_t index = _HashFunc(cur->_k, OldLen);
+						size_t index = _HashFunc(cur->_kv.first, OldLen);
 			
 						
 						cur->_next = tmp[index];
@@ -234,6 +330,17 @@ void TestHashLinkTable()
 	ht.Remove(6);
 	ht.Remove(54);
 	ht.Remove(1);
-}
+	LINK::HashTable<int, int>::Iterator it = ht.Begin();
+	while (it != ht.End())
+	{
+		
+		cout << it->first<< " ";
+		++it;
+	}
+	cout << endl;
+	
+	
 
+
+}
 #endif //_HASHTABLE_H_
