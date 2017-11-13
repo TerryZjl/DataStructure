@@ -5,6 +5,7 @@
 #include<vector>
 using namespace std;
 
+
 ///// @brief SDBM Hash Function  
 /// @detail 本算法是由于在开源项目SDBM（一种简单的数据库引擎）中被应用而得名，它与BKDRHash思想一致，只是种子不同而已。  
 template<class T>
@@ -52,161 +53,173 @@ static const unsigned long _PrimeList[_PrimeSize] =
 	1610612741ul, 3221225473ul, 4294967291ul
 };
 
-enum state
-{
-	EXIST,
-	EMPTY,
-	DELETED
-};
 
 
-template<class K, class V>
-struct HashNode
+
+namespace LINK
 {
-	state _state;
-	pair<K, V> _kv;
-	HashNode()
-		:_state(EMPTY)
-	{}
-};
-//开放定值法
-template<class K,class V,class Compere = Com<K>>
-class HashTable
-{
-	typedef HashNode<K, V> Node;
-public:
-	HashTable()
-		:_size(0)
-	{}
-	bool Insert(const pair<K, V>& x)
+	template<class K, class V>
+	struct HashLinkNode
 	{
-		AddCapacity();//判断增容，并深拷贝
-
-		size_t len = _v.size();
-		size_t index = HashFunc(x.first);//除留余数法求下标
-		size_t i = 1;
-		int num = index; //保存第一次计算的下标位置，方便二次探测
-		while (_v[index]._state == EXIST)
+		K _k;
+		V _v;
+		HashLinkNode<K,V>* _next;
+		HashLinkNode(const K& k, const V& v)
+			:_k(k)
+			, _v(v)
+			, _next(NULL)
+		{}
+	};
+	template<class K, class V, class HashFunc = Com<K>>
+	class HashTable
+	{
+		typedef HashLinkNode<K, V> Node;
+	public:
+		HashTable()
+			:_size(0)
+		{}
+		bool Insert(const K& key,const V& value)
 		{
-			if(_v[index]._kv.first == x.first)//不允许Key值冗余
+			AddCapacity();
+
+			size_t OldLen = _v.size();
+			size_t index = _HashFunc(key, OldLen);
+
+			Node* cur = _v[index];
+			while (cur)
 			{
-				cout << x.first << "已存在，插入失败" << endl;
-				return false;
+				if (cur->_k == key)
+					return false;
+				cur = cur->_next;
 			}
-			//线性探测
-			//++index;
-			//++i;
-			//if (index == len)
-			//	index = index%len;
 
-			//二次探测
-			index = num + (i*i);
-			++i;
-			if (index == len)
-				index = index%len;
-		}
-		_v[index]._kv = x;
-		_v[index]._state = EXIST;
-		++_size;
-		cout << _v[index]._kv.first<< ":插入成功" << endl;
-		return true;
-		
-	}
-
-
-	Node* Find(const K& key)
-	{
-		size_t index = HashFunc(key);
-		size_t len = _v.size();
-		int i = 1;
-		int num = index;
-		while (_v[index]._state != EMPTY)
-		{
-			if (_v[index]._state == EXIST)
-			{
-				if (_v[index]._kv.first == key)
-					return &_v[index];
-			}
-			////线性探测
-			//++index;
-			//if (index == len)
-			//	index = index%len;
-
-			//二次探测
-			index = num + (i*i);
-			++i;
-			if (index == len)
-				index = index%len;
-		}
-		return NULL;
-	}
-	bool Erase(const K& key)
-	{
-		Node* cur = Find(key);
-		if (cur != NULL)
-		{
-			size_t index = cur->_kv.first;
-			_v[index]._state = EMPTY;
+			Node* NewNode = new Node(key, value);
+			NewNode->_next = _v[index];
+			_v[index] = NewNode;
+			++_size;
 			return true;
 		}
-		else
+		Node* Find(const K& key)
 		{
+			size_t index = _HashFunc(key, _v.size());
+			Node* cur = _v[index];
+			while (cur)
+			{
+				if (cur->_k == key)
+					return cur;
+				cur = cur->_next;
+			}
+			return NULL;
+		}
+		bool Remove(const K& key)
+		{
+			size_t index = _HashFunc(key, _v.size());
+
+			Node* prev = NULL;
+			Node*  cur = _v[index];
+
+			while (cur)
+			{
+				if (cur->_k == key)
+				{
+					if (prev == NULL)//头删
+					{
+						_v[index] = cur->_next;
+						delete cur;
+					}
+					else
+					{
+						Node* del = cur;
+						prev->_next = cur->_next;
+						delete del;
+					}
+					--_size;
+					return true;
+				}
+				prev = cur;
+				cur = cur->_next;
+			}
 			return false;
 		}
-	}
 
-	size_t Size()
-	{
-		return _size;
-	}
-	size_t Capacity()
-	{
-		return _v.size();
-	}
-private:
-	size_t HashFunc(const K& x)
-	{
-		Compere hf;
-		string str = x;
-		return hf(str.c_str()) % _v.size();
-	}
-	void AddCapacity()
-	{
-		size_t TableLen = _v.size();
-		if (TableLen == 0)   //如果表长为0，则直接增容
+		size_t Size()
 		{
-			size_t NewTableLen = GetCapacity(0);
-			_v.resize(NewTableLen);
-			return;
+			return _size();
 		}
-		if ((_size * 10) / (TableLen * 10) > 7)  //计算增容并深拷贝数据
+		size_t Capacity()
 		{
-			size_t NewTableLen = GetCapacity(TableLen);
-			HashTable<K, V> NewHt;
-			NewHt._v.resize(NewTableLen);
-			for (int i = 0; i < TableLen; i++)
+			return _v.size();
+		}
+		
+	private:
+		void AddCapacity()
+		{
+			size_t OldLen = _v.size();
+			if (OldLen == 0)
 			{
-				NewHt.Insert(_v[i]._kv);
+				size_t NewLen = GetCapacity(0);
+				_v.resize(NewLen);
+				return;
 			}
-			_v.swap(NewHt._v);
-		}
-	}
+			if (_size / OldLen > 1) //增容
+			{
+				size_t NewLen = GetCapacity(OldLen);
+				vector<Node*> tmp;
+				tmp.resize(NewLen);
+				for (int i = 0; i < OldLen; i++)
+				{
+					Node* cur = _v[i];
+					while (cur)
+					{
+						Node* next = cur->_next;
+						size_t index = _HashFunc(cur->_k, OldLen);
+			
+						
+						cur->_next = tmp[index];
+						tmp[index] = cur;
 
-	size_t GetCapacity(size_t OldLen)
-	{
-		for (int i = 0; i < _PrimeSize; i++)
-		{
-			if (OldLen < _PrimeList[i])
-			{
-				return _PrimeList[i];
+						//if (tmp[index] == NULL)
+						//{
+						//	tmp[index] = cur;
+						//}
+						//else
+						//{
+						//	Node* front = tmp[index];
+						//	cur->_next = front;
+						//	tmp[index] = cur;
+						//}
+						//
+				
+						cur = next;
+					}
+				}
+				_v.swap(tmp);
 			}
 		}
-		return _PrimeList[_PrimeSize-1];
-	}
-private:
-	vector<Node> _v;
-	size_t _size;  //表里面存数据的个数
+		size_t GetCapacity(size_t OldLen)
+		{
+			for (int i = 0; i < _PrimeSize; i++)
+			{
+				if (OldLen < _PrimeList[i])
+				{
+					return _PrimeList[i];
+				}
+			}
+			return _PrimeList[_PrimeSize - 1];
+		}
+
+		size_t _HashFunc(size_t size,size_t len)
+		{
+			HashFunc hf;
+			return hf(size) % len;
+		}
+
+	private:
+		vector<Node*> _v;
+		size_t _size;  //表里面存数据的个数
+	};
 };
+
 
 void TestHashTable()
 {
@@ -228,14 +241,20 @@ void TestHashTable()
 	//HashNode<int,int>* ret = ht.Find(16);
 	//if (ret)
 	//	cout << ret->_kv.first <<":"<< ret->_kv.second << endl;
-	HashTable<string, string> ht2;
-	ht2.Insert(make_pair("张三", "zhangsan"));
-	ht2.Insert(make_pair("李四", "lisi"));
-	ht2.Insert(make_pair("王麻子", "wangmazi"));
-	ht2.Insert(make_pair("字符串", "string"));
-	HashNode<string, string>* ret = ht2.Find("李四");
-	if (ret)
-		cout << ret->_kv.second << endl;
+	//HashTable<string, string> ht2;
+	//ht2.Insert(make_pair("张三", "zhangsan"));
+	//ht2.Insert(make_pair("李四", "lisi"));
+	//ht2.Insert(make_pair("王麻子", "wangmazi"));
+	//ht2.Insert(make_pair("字符串", "string"));
+	//HashNode<string, string>* ret = ht2.Find("李四");
+	//if (ret)
+	//	cout << ret->_kv.second << endl;
+
+	//HashTable<int, int> ht3;
+	//for (int i = 0; i < 100; i++)
+	//{
+	//	ht3.Insert(make_pair(i, i));
+	//}
 
 }
 
