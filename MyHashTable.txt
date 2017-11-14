@@ -1,0 +1,329 @@
+#ifndef _HASH_H_
+#define _HASH_H_
+
+#include<iostream>
+#include<vector>
+using namespace std;
+
+
+///// @brief SDBM Hash Function  
+/// @detail 本算法是由于在开源项目SDBM（一种简单的数据库引擎）中被应用而得名，它与BKDRHash思想一致，只是种子不同而已。  
+template<class T>
+size_t SDBMHash(const T *str)
+{
+	register size_t hash = 0;
+	while (size_t ch = (size_t)*str++)
+	{
+		hash = 65599 * hash + ch;
+		//hash = (size_t)ch + (hash << 6) + (hash << 16) - hash;  
+	}
+	return hash;
+}
+
+template<class K>
+struct __HashFunc
+{
+	size_t operator()(const K& key)
+	{
+		return key;
+	}
+};
+
+
+template<>
+struct __HashFunc<string>
+{
+	size_t operator()(const char* key)
+	{
+		return SDBMHash(key);
+	}
+};
+
+//使用素数表对齐做哈希表的容量，降低哈希冲突
+const int _PrimeSize = 28;
+static const unsigned long _PrimeList[_PrimeSize] =
+{
+	53ul, 97ul, 193ul, 389ul, 769ul,
+	1543ul, 3079ul, 6151ul, 12289ul, 24593ul,
+	49157ul, 98317ul, 196613ul, 393241ul,
+	786433ul,
+	1572869ul, 3145739ul, 6291469ul, 12582917ul,
+	25165843ul,
+	50331653ul, 100663319ul, 201326611ul, 402653189ul,
+	805306457ul,
+	1610612741ul, 3221225473ul, 4294967291ul
+};
+
+namespace LINK
+{
+	template<class ValueType>
+	struct HashLinkNode
+	{
+
+		ValueType _kv;
+		HashLinkNode<ValueType>* _next;
+		HashLinkNode(const ValueType& kv)
+			:_kv(kv)
+			, _next(NULL)
+		{}
+	};
+
+	template<class K, class V, class Compere, class HashFunc = __HashFunc<K>> class HashTable;
+	template<class K, class V, class Compere,class HashFunc = __HashFunc<K>>
+	struct HashTableIterator
+	{
+
+		typedef V ValueType;
+		typedef HashLinkNode<ValueType> Node;
+		typedef HashTableIterator<K, ValueType, Compere,HashFunc> Self;
+		typedef HashTable<K, ValueType, Compere, HashFunc> Hash;
+		Hash* _ht; //哈希表
+		Node* _node;  //节点的指针
+
+		HashTableIterator()
+			:_node(NULL)
+			, _ht(NULL)
+		{}
+		HashTableIterator(Node* node, Hash* ht)
+			:_node(node)
+			, _ht(ht)
+		{}
+		Self& operator=(const Self& It)
+		{
+			if (*this != It)
+			{
+				_node = It._node;
+				_ht = It._ht;
+			}
+			return *this;
+		}
+
+		Self& operator++()
+		{
+			Compere Com;
+			Node* cur = _node;
+			if (cur->_next) // 如果哈希桶的下一个位置不为空，则直接走下一个位置。
+			{
+				cur = cur->_next;
+				_node = cur;
+				return *this;
+			}
+			else     //否则，通过key值找到下标，然后++下标，判断哈希表的下一个位置是否有数据。
+			{
+				size_t size = _ht->_v.size();
+				HashFunc hf;
+				size_t index = hf(Com(cur->_kv)) % size;
+				++index;
+				for (; index < size; index++)
+				{
+					if (_ht->_v[index])
+					{
+						_node = _ht->_v[index];
+						return *this;
+					}
+				}
+				_node = NULL;
+				return *this;
+			}
+		}
+
+		ValueType& operator*()
+		{
+			return _node->_kv;
+		}
+		ValueType* operator->()
+		{
+			return &(_node->_kv);
+		}
+
+		bool operator!=(const Self& It)
+		{
+			return _node != It._node ? true : false;
+		}
+		bool operator==(const Self& It)
+		{
+			return _node == It._node ? true : false;
+
+		}
+
+
+
+
+	};
+	template<class K, class V, class Compere,class HashFunc = __HashFunc<K>>
+	class HashTable
+	{
+		typedef HashLinkNode<V> Node;
+		typedef V ValueType;
+		friend struct HashTableIterator<K, ValueType, Compere,HashFunc>;  //迭代器的哈希表指针成员必须要访问哈希表，但是这个哈希表是私有的，要访问必须设置成友元。
+	public:
+		typedef HashTableIterator<K, ValueType,Compere, HashFunc> Iterator;
+
+		HashTable()
+			:_size(0)
+		{}
+		Iterator Begin()
+		{
+			for (size_t i = 0; i < _v.size(); i++)
+			{
+				if (_v[i])
+				{
+					return Iterator(_v[i], this);
+				}
+			}
+			return Iterator();
+		}
+
+		Iterator End()
+		{
+			return Iterator(NULL, this);
+		}
+		pair<Iterator,bool> Insert(const ValueType& value)
+		{
+			Compere Com;
+			AddCapacity();
+			K key = Com(value);
+			size_t OldLen = _v.size();
+			size_t index = _HashFunc(key, OldLen);
+
+			Node* cur = _v[index];
+			while (cur)
+			{
+				if (Com(cur->_kv) == key)
+					return pair<Iterator,bool>(Iterator(cur, this), false);
+				//return false;
+				cur = cur->_next;
+			}
+			Node* NewNode = new Node(value);
+			NewNode->_next = _v[index];
+			_v[index] = NewNode;
+			++_size;
+			//return false;
+			return pair<Iterator, bool>(Iterator(NewNode, this), true);
+		}
+		Iterator Find(const K& key)
+		{
+			Compere Com;
+			size_t index = _HashFunc(key, _v.size());
+			Node* cur = _v[index];
+			while (cur)
+			{
+				if (Com(cur->_kv) == key)
+					return Iterator(cur,this);
+				cur = cur->_next;
+			}
+			return Iterator(NULL,this);
+		}
+		bool Remove(const K& key)
+		{
+			Compere Com;
+			size_t index = _HashFunc(key, _v.size());
+
+			Node* prev = NULL;
+			Node*  cur = _v[index];
+
+			while (cur)
+			{
+				if (Com(cur->_kv) == key)
+				{
+					if (prev == NULL)//头删
+					{
+						_v[index] = cur->_next;
+						delete cur;
+					}
+					else
+					{
+						Node* del = cur;
+						prev->_next = cur->_next;
+						delete del;
+					}
+					--_size;
+					return true;
+				}
+				prev = cur;
+				cur = cur->_next;
+			}
+			return false;
+		}
+
+		size_t Size()
+		{
+			return _size();
+		}
+		size_t Capacity()
+		{
+			return _v.size();
+		}
+
+	private:
+		void AddCapacity()
+		{
+			Compere Com;
+			size_t OldLen = _v.size();
+			if (OldLen == 0)
+			{
+				size_t NewLen = GetCapacity(0);
+				_v.resize(NewLen);
+				return;
+			}
+			if (_size / OldLen > 1) //增容
+			{
+				size_t NewLen = GetCapacity(OldLen);
+				vector<Node*> tmp;
+				tmp.resize(NewLen);
+				for (int i = 0; i < OldLen; i++)
+				{
+					Node* cur = _v[i];
+					while (cur)
+					{
+						Node* next = cur->_next;
+						size_t index = _HashFunc(Com(cur->_kv), NewLen);
+
+
+						cur->_next = tmp[index];
+						tmp[index] = cur;
+
+						//if (tmp[index] == NULL)
+						//{
+						//	tmp[index] = cur;
+						//}
+						//else
+						//{
+						//	Node* front = tmp[index];
+						//	cur->_next = front;
+						//	tmp[index] = cur;
+						//}
+						//
+
+						cur = next;
+					}
+				}
+				_v.swap(tmp);
+			}
+		}
+		size_t GetCapacity(size_t OldLen)
+		{
+			for (int i = 0; i < _PrimeSize; i++)
+			{
+				if (OldLen < _PrimeList[i])
+				{
+					return _PrimeList[i];
+				}
+			}
+			return _PrimeList[_PrimeSize - 1];
+		}
+
+		size_t _HashFunc(size_t size, size_t len)
+		{
+			HashFunc hf;
+			return hf(size) % len;
+		}
+
+	private:
+		vector<Node*> _v;
+		size_t _size;  //表里面存数据的个数
+	};
+};
+
+
+#endif //_HASH_H_
