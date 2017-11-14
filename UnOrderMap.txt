@@ -1,0 +1,87 @@
+#ifndef _UNORDERMAP_H_
+#define _UNORDERMAP_H_
+
+#include<iostream>
+#include"Hash.h"
+using namespace std;
+
+template<class K, class ValueType>
+struct CompereMap
+{
+	const K& operator()(const ValueType& value) const 
+	{
+		return value.first;
+	}
+};
+template<class K, class V>
+class UnOrderMap
+{
+	typedef pair<K, V> ValueType;
+	typedef LINK::HashTable<K, ValueType, CompereMap<K, ValueType>> MapNode;
+public:
+	typedef typename MapNode::Iterator Iterator;
+
+
+	pair<Iterator, bool> Insert(const K& key, const V&value)
+	{
+		ValueType p = make_pair(key, value);
+		return map.Insert(p);
+	}
+
+	Iterator Find(const K& key)
+	{
+		return map.Find(key);
+	}
+
+	bool Remove(const K& key)
+	{
+		return map.Remove(key);
+	}
+	Iterator End()
+	{
+		return map.End();
+	}
+	Iterator Begin()
+	{
+		return map.Begin();
+	}
+
+private:
+	MapNode map;
+};
+
+void TestUnOrderMap()
+{
+	UnOrderMap<int,int> s;
+	for (int i = 0; i < 1000; i++)
+		s.Insert(i,i);
+
+	UnOrderMap<int,int>::Iterator it = s.Begin();
+	int i = 0;
+	while (it != s.End())
+	{
+		cout << it->first<<"  :  "<<it->second<< " ";
+		i++;
+		if (i == 10)
+		{
+			cout << endl;
+			i = 0;
+		}
+		++it;
+	}
+	cout << endl;
+
+	it = s.Find(15222222);
+	if (it == s.End())
+	{
+		cout << "Ã»ÕÒµ½" << endl;
+	}
+	else
+	{
+		cout << it->second << endl;
+	}
+}
+
+
+
+#endif //_UNORDERMAP_H_
