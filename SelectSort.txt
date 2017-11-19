@@ -1,58 +1,33 @@
-#ifndef _TEST_H_
-#define _TEST_H_
-
-#include<iostream>
-using namespace std;
-
-void Swap(int* left, int* right);
-
-void SelectSort(int *a, size_t len)
+void SelectSort2(int* a, size_t n)
 {
 	int begin = 0;
-	int end = len-1;
+	int end = n-1;
+	int min = 0;
+	int max = 0;
 
-	while (end > begin)
+	while (begin<end)//O(1/2n)
 	{
-		int min = begin;
-		int max = end;
-		for (size_t i = 0; i < end - begin; i++)
+		min = begin;
+		max = begin;
+		for (size_t i = begin; i <= end; i++) //相为2的等差数列
 		{
-			if (a[min] < a[min + 1])
+			if (a[min]>a[i]) //在无序区间里选出最小的
 			{
-				Swap(&a[min], &a[min + 1]);
+				min = i;
 			}
-
-			if (a[max] > a[max - 1])
+			if (a[max] < a[i]) //在无序区间里选出最大的
 			{
-				Swap(&a[max], &a[max - 1]);
+				max = i;
 			}
-			min++;
-			max--;
 		}
-		end--;
-		begin++;
-
+		swap(a[max], a[end]);
+		if (end == min)//	防止max和min互相交换
+		{
+			a[min] = a[max];
+		}
+		swap(a[min], a[begin]);
+		++begin;
+		--end;
 	}
-	
 }
 
-void Swap(int* left, int* right)
-{
-	int tmp = 0;
-	tmp = *left;
-	*left = *right;
-	*right = tmp;
-}
-
-void TestSelectSort()
-{
-	int a[10] = { 2,5, 4, 9, 3, 6, 8, 7, 1, 0 };
-	SelectSort(a, sizeof(a) / sizeof(a[0]));
-	for (size_t i = 0; i < 10; i++)
-	{
-		cout << a[i] << " ";
-	}
-	cout << endl;
-}
-
-#endif
