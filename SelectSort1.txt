@@ -1,0 +1,20 @@
+void SelectSort1(int* a, size_t n)
+{
+	int begin = 0;
+	int end = n-1;
+	int min = 0;
+	while (begin < end)//O(n)
+	{
+		min = begin;
+		for (size_t i = begin; i <= end; i++)//n到1
+		{
+			if (a[min] > a[i])
+			{
+				min = i;//选择出最小的
+			}
+		}
+		swap(a[begin], a[min]);
+		++begin;
+	}
+
+}
