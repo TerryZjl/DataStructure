@@ -1,0 +1,66 @@
+#ifndef _BITMAP_H_
+#define _BITMAP_H_
+
+
+#include<iostream>
+#include<vector>
+using namespace std;
+
+
+
+class BitMap
+{
+public:
+	BitMap(size_t size)
+	{
+		_tables.resize(size/8,0);
+	}
+	void Set(size_t value)
+	{
+		size_t size = _tables.size();
+		size_t index = value/8; // 求得value在vecotr的那个下边处
+		size_t bit = value%8;   //求得value在下标处八个位处
+
+		size_t i = 1;
+		i <<= bit;
+		_tables[index] |= i;
+	}
+
+	size_t Test(size_t value)
+	{
+		size_t size = _tables.size();
+		size_t index = value / 8; // 求得value在vecotr的那个下边处
+		size_t bit = value % 8;   //求得value在下标处八个位处
+
+		size_t i = 1;
+		i <<= bit;
+		size_t num = _tables[index];
+		if (num&i == 1)
+		{
+			return num;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+private:
+	vector<char> _tables;
+};
+
+void TestBitMap()
+{
+	//BitMap bm(1024*1024*1024*4);
+	BitMap bm(-1);
+	bm.Set(1101);
+	bm.Set(1001);
+	bm.Set(1001111);
+	bm.Set(1002221);
+
+	cout << bm.Test(1101) << endl;
+	cout << bm.Test(1102) << endl;
+	cout << bm.Test(1001) << endl;
+	cout << bm.Test(1002221) << endl;
+}
+
+#endif//_BITMAP_H_
