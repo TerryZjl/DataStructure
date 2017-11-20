@@ -1,0 +1,25 @@
+void ShellSort(int *a, size_t n)
+{
+
+	int gap = n;
+
+	while (gap > 1)
+	{
+		gap = gap / 3 + 1; ////加1，是因为如果最后gap为1或者2，那么除3就是0了，所以要加1，保证gap最小为1.
+		
+		int begin = 0;
+		int end = n - gap; //因为现在是对距离gap为一组的记录进行排序
+		while (begin<end)//轮循的把每个组的每个位置都判断一遍
+		{
+			int i = begin;
+			int tmp = a[i + gap];
+			while (i >= 0 && a[i] > tmp)//对一个组的某个位置向前比较，并进行直接插入
+			{
+				a[i + gap] = a[i];
+				i -= gap;
+			}
+			a[i + gap] = tmp;
+			++begin;
+		}
+	}
+}
