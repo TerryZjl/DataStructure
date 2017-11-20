@@ -1,0 +1,17 @@
+void InsertSort(int *a, size_t n)
+{
+	int begin = 0;
+	int end = n - 1;
+	while (begin<end)  //轮循整个数组
+	{
+		int i = begin;
+		int tmp = a[i+1];
+		while (i>=0&&a[i]>tmp) //选下一个进行插入
+		{
+			a[i + 1] = a[i];
+			--i;
+		}
+		a[i + 1] = tmp;
+		++begin;
+	}
+}
