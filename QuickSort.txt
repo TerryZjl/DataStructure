@@ -20,3 +20,16 @@ int PartSort(int *a, size_t begin, size_t end)
 	return begin;
 }
 
+
+void QuickSort(int *a, int left ,int right)
+{
+	if (left >= right)
+	{
+		return;
+	}
+	int ret = PartSort(a, left, right);
+
+	QuickSort(a, left, ret - 1);
+	QuickSort(a, ret + 1, right);
+
+}
