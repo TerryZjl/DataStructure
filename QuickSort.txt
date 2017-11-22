@@ -1,4 +1,3 @@
-
 int GetMid(int *a, int left, int right)
 {
 	int mid = left + ((right - left) >> 1);
@@ -51,13 +50,36 @@ int PartSort(int *a, size_t begin, size_t end)
 	return begin;
 }
 
+void InsertSort1(int *a, int left, int right)
+{
+	while (left < right)
+	{
+		int tmp = a[left + 1];
+		int i = left;
+		for (; i>=0; i--)
+		{
+			if (a[i] > tmp)
+				a[i + 1] = a[i];
+			else
+				break;
+		}
+		a[i + 1] = tmp;
+		++left;
+	}
+}
 void QuickSort(int *a, int left ,int right)
 {
-	if (left >= right)
+	//if (left >= right)
+	//{
+	//	return;
+	//}
+	if ((right - left) <= 8)
 	{
+		InsertSort1(a, left, right);
 		return;
 	}
 	int ret = PartSort(a, left, right);
+	
 
 	QuickSort(a, left, ret - 1);
 	QuickSort(a, ret + 1, right);
