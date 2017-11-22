@@ -1,8 +1,9 @@
 
+
 int PartSort(int *a, size_t begin, size_t end)
 {
 	int key = end;
-	--end;
+	//--end;
 	while (begin<end)
 	{
 		while (begin<end&&a[begin]<=a[key])//等于号防止begin和end和key三个相等时，发生死循环
@@ -19,7 +20,6 @@ int PartSort(int *a, size_t begin, size_t end)
 	swap(a[begin],a[key]);
 	return begin;
 }
-
 
 void QuickSort(int *a, int left ,int right)
 {
