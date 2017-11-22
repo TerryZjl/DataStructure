@@ -1,8 +1,38 @@
 
+int GetMid(int *a, int left, int right)
+{
+	int mid = left + ((right - left) >> 1);
+
+	// left mid
+	if (a[left] < a[mid])
+	{
+		// left mid right
+		if (a[mid] < a[right])
+			return mid;
+		else if (a[right] < a[mid])
+			return right;
+		else
+			return left;
+
+	}
+	else //mid left
+	{
+		if (a[left] < a[right])
+			return left;
+		else if (a[right] < a[mid])
+			return mid;
+		else
+			return right;
+	}
+
+}
+
 
 int PartSort(int *a, size_t begin, size_t end)
 {
-	int key = end;
+	int key = GetMid(a,begin,end);
+	swap(a[key], a[end]);
+	key = end;
 	//--end;
 	while (begin<end)
 	{
