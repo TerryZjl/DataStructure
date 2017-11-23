@@ -1,0 +1,38 @@
+//[left,right]
+void QuickSort(int *a, int left ,int right)
+{
+	//if (left >= right)
+	//{
+	//	return;
+	//}
+	if ((right - left) <= 8)
+	{
+		InsertSort1(a, left, right);
+		return;
+	}
+	int ret = PartSort(a, left, right);
+	
+
+	QuickSort(a, left, ret - 1);
+	QuickSort(a, ret + 1, right);
+
+}
+
+#include<stack>
+
+//前后指针法
+int PartSort3(int *a, int begin, int end)
+{
+	int cur = begin;
+	int prev = cur - 1;
+	int key = end;
+	//	int a[] = { 10, 1, 5, 8, 0, 8, 9, 5, 7, 5 };
+	while (cur<end)
+	{
+		if (a[cur] < a[key]&&(++prev)!=cur)
+				swap(a[cur], a[prev]);
+		++cur;
+	}
+	swap(a[++prev], a[cur]);
+	return prev;
+}
