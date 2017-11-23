@@ -1,0 +1,27 @@
+//ÍÚ¿Ó·¨
+int PartSort2(int *a ,int begin, int end)
+{
+	int key = a[end];
+
+	while (begin<end)
+	{
+		while (begin<end&&a[begin] <= key)
+			++begin;
+		a[end] = a[begin];
+		while (begin<end&&a[end]>key)
+			--end;
+		a[begin] = a[end];
+	}
+	a[begin] = key;
+	return begin;
+}
+//[left,right]
+void QuickSort2(int *a, int left, int right)
+{
+	if (left >= right)
+		return;
+
+	int ret = PartSort2(a, left, right);
+	QuickSort2(a, left, ret - 1);
+	QuickSort2(a, ret + 1,right);
+}
