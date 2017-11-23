@@ -1,0 +1,25 @@
+
+//·ÇµÝ¹é [left,right]
+void QuickSortNR(int *a, int left, int right)
+{
+	stack<int> s;
+	s.push(left);
+	s.push(right);
+
+	while (!s.empty())
+	{
+		int right = s.top();
+		s.pop();
+		int left = s.top();
+		s.pop();
+
+		int ret = PartSort3(a, left, right);
+		if (left < right)
+		{
+			s.push(left);
+			s.push(ret - 1);
+			s.push(ret + 1);
+			s.push(right);
+		}
+	}
+}
