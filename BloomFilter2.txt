@@ -1,0 +1,170 @@
+#ifndef _BLOOMFILTER_H__
+#define _BLOOMFILTER_H__
+
+#include<iostream>
+#include"BitMap.h"
+#include<string>
+#include<vector>
+using namespace std;
+
+/// @brief BKDR Hash Function  
+/// @detail 本 算法由于在Brian Kernighan与Dennis Ritchie的《The C Programming Language》一书被展示而得 名，是一种简单快捷的hash算法，也是Java目前采用的字符串的Hash算法（累乘因子为31）。  
+template<class T>
+size_t BKDRHash(const T *str)
+{
+	register size_t hash = 0;
+	while (size_t ch = (size_t)*str++)
+	{
+		hash = hash * 131 + ch;   // 也可以乘以31、131、1313、13131、131313..  
+	}
+	return hash;
+}
+
+
+/// @brief SDBM Hash Function  
+/// @detail 本算法是由于在开源项目SDBM（一种简单的数据库引擎）中被应用而得名，它与BKDRHash思想一致，只是种子不同而已。  
+template<class T>
+size_t SDBMHash(const T *str)
+{
+	register size_t hash = 0;
+	while (size_t ch = (size_t)*str++)
+	{
+		hash = 65599 * hash + ch;
+		//hash = (size_t)ch + (hash << 6) + (hash << 16) - hash;  
+	}
+	return hash;
+}
+
+
+/// @brief RS Hash Function  
+/// @detail 因Robert Sedgwicks在其《Algorithms in C》一书中展示而得名。  
+template<class T>
+size_t RSHash(const T *str)
+{
+	register size_t hash = 0;
+	size_t magic = 63689;
+	while (size_t ch = (size_t)*str++)
+	{
+		hash = hash * magic + ch;
+		magic *= 378551;
+	}
+	return hash;
+}
+
+
+
+
+struct _HashFunc1
+{
+	size_t operator()(string str)
+	{
+		return BKDRHash(str.c_str());
+	}
+};
+struct _HashFunc2
+{
+	size_t operator()(string str)
+	{
+		return SDBMHash(str.c_str());
+	}
+};
+struct _HashFunc3
+{
+	size_t operator()(string str)
+	{
+		return RSHash(str.c_str());
+	}
+};
+template<class K = string,
+class HashFunc1 = _HashFunc1,
+class HashFunc2 = _HashFunc2,
+class HashFunc3 = _HashFunc3>
+class BloomFilter2
+{
+public:
+	BloomFilter2(size_t size)
+	{
+		_bm.resize(size*5);
+	}
+	void Set(const K& key)
+	{
+		int size = _bm.size();
+		size_t index1 = HashFunc1()(key) % size;
+		_bm[index1]++;
+		size_t index2 = HashFunc2()(key) % size;
+		_bm[index2]++;
+		size_t index3 = HashFunc3()(key) % size;
+		_bm[index3]++;
+	}
+	bool Test(const K& key)
+	{
+		int size = _bm.size();
+		size_t index1 = HashFunc1()(key) % size;
+		size_t index2 = HashFunc2()(key) % size;
+		size_t index3 = HashFunc3()(key) % size;
+
+		if (_bm[index1] == 0)
+			return false;
+		if (_bm[index1] == 0)
+			return false;
+		if (_bm[index1] == 0)
+			return false;
+		return true;
+	}
+	void RSet(const K& key)
+	{
+		int size = _bm.size();
+		size_t index1 = HashFunc1()(key) % size;
+		size_t index2 = HashFunc2()(key) % size;
+		size_t index3 = HashFunc3()(key) % size;
+		if (_bm[index1] != 0)
+			_bm[index1]--;
+		if (_bm[index2] != 0)
+			_bm[index2]--;	
+		if (_bm[index3] != 0)
+			_bm[index3]--;
+	}
+private:
+	vector<size_t> _bm;
+};
+
+void TestBloomFilter()
+{
+	//BloomFilter<> Bf(5);
+	//Bf.Set("http://www.cnblogs.com/-clq/archive/2012/05/31/2528153.html");
+	//Bf.Set("http://www.cnblogs.com/-clq/archive/2012/05/31/2825153.html");
+	//Bf.Set("http://www.cnblogs.com/-clq/archive/2012/05/31/5282153.html");
+	//Bf.Set("http://www.cnblogs.co153.html");
+	//Bf.Set("http://www.cnblogs.coasdddddddaasdaaaave/2012/05/31/2528153.html");
+
+	//cout<<Bf.Test("http://www.cnblogs.com/-clq/archive/2012/05/31/2528153.html")<<endl;
+	//cout<<Bf.Test("http://www.cnblogs.com/-clq/archive/2012/05/31/2825153.html")<<endl;
+	//cout<<Bf.Test("http://www.cnblogs.com/-clq/archive/2012/05/31/5282153.html")<<endl;
+	//cout<<Bf.Test("http://www.cnblogs.co153.html")<<endl;
+	//cout << Bf.Test("http://www.cnblogs.coasdddddddaasdaaaave/2012/05/31/2528153.html") << endl;
+	//cout<<Bf.Test("http://wwwasssssssssss.cnblogs.coasdddddddaasdaaaave/2012/05/31/2528153.html")<<endl;
+	BloomFilter2<> Bf(5);
+	Bf.Set("http://www.cnblogs.com/-clq/archive/2012/05/31/2528153.html");
+	Bf.Set("http://www.cnblogs.com/-clq/archive/2012/05/31/2825153.html");
+	Bf.Set("http://www.cnblogs.com/-clq/archive/2012/05/31/5282153.html");
+	Bf.Set("http://www.cnblogs.co153.html");
+	Bf.Set("http://www.cnblogs.coasdddddddaasdaaaave/2012/05/31/2528153.html");
+		Bf.RSet("http://www.cnblogs.com/-clq/archive/2012/05/31/2825153.html");
+	Bf.RSet("http://www.cnblogs.com/-clq/archive/2012/05/31/5282153.html");
+	Bf.RSet("http://www.cnblogs.co153.html");
+	Bf.RSet("http://www.cnblogs.coasdddddddaasdaaaave/2012/05/31/2528153.html");
+
+
+
+	cout << Bf.Test("http://www.cnblogs.com/-clq/archive/2012/05/31/2528153.html") << endl;
+	cout << Bf.Test("http://www.cnblogs.com/-clq/archive/2012/05/31/2825153.html") << endl;
+	cout << Bf.Test("http://www.cnblogs.com/-clq/archive/2012/05/31/5282153.html") << endl;
+	cout << Bf.Test("http://www.cnblogs.co153.html") << endl;
+	cout << Bf.Test("http://www.cnblogs.coasdddddddaasdaaaave/2012/05/31/2528153.html") << endl;
+	cout << Bf.Test("http://wwwasssssssssss.cnblogs.coasdddddddaasdaaaave/2012/05/31/2528153.html") << endl;
+	
+
+	int i = 0;
+
+}
+#endif //_BLOOMFILTER_H__
