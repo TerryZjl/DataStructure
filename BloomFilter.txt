@@ -1,0 +1,130 @@
+#ifndef _BLOOMFILTER_H__
+#define _BLOOMFILTER_H__
+
+#include<iostream>
+#include"BitMap.h"
+#include<string>
+using namespace std;
+
+/// @brief BKDR Hash Function  
+/// @detail 本 算法由于在Brian Kernighan与Dennis Ritchie的《The C Programming Language》一书被展示而得 名，是一种简单快捷的hash算法，也是Java目前采用的字符串的Hash算法（累乘因子为31）。  
+template<class T>
+size_t BKDRHash(const T *str)
+{
+	register size_t hash = 0;
+	while (size_t ch = (size_t)*str++)
+	{
+		hash = hash * 131 + ch;   // 也可以乘以31、131、1313、13131、131313..  
+	}
+	return hash;
+}
+
+
+/// @brief SDBM Hash Function  
+/// @detail 本算法是由于在开源项目SDBM（一种简单的数据库引擎）中被应用而得名，它与BKDRHash思想一致，只是种子不同而已。  
+template<class T>
+size_t SDBMHash(const T *str)
+{
+	register size_t hash = 0;
+	while (size_t ch = (size_t)*str++)
+	{
+		hash = 65599 * hash + ch;
+		//hash = (size_t)ch + (hash << 6) + (hash << 16) - hash;  
+	}
+	return hash;
+}
+
+
+/// @brief RS Hash Function  
+/// @detail 因Robert Sedgwicks在其《Algorithms in C》一书中展示而得名。  
+template<class T>
+size_t RSHash(const T *str)
+{
+	register size_t hash = 0;
+	size_t magic = 63689;
+	while (size_t ch = (size_t)*str++)
+	{
+		hash = hash * magic + ch;
+		magic *= 378551;
+	}
+	return hash;
+}
+
+
+
+
+struct _HashFunc1
+{
+	size_t operator()(string str)
+	{
+		return BKDRHash(str.c_str());
+	}
+};
+struct _HashFunc2
+{
+	size_t operator()(string str)
+	{
+		return SDBMHash(str.c_str());
+	}
+};
+struct _HashFunc3
+{
+	size_t operator()(string str)
+	{
+		return RSHash(str.c_str());
+	}
+};
+
+template<class K = string,
+		class HashFunc1 = _HashFunc1,
+		class HashFunc2 = _HashFunc2, 
+		class HashFunc3 = _HashFunc3>
+class BloomFilter
+{
+public:
+	BloomFilter(size_t size)
+		:map(size*5)
+		, BitSize(size*5)
+	{
+		 //size为需要映射多少个字符串，现在有3个hash函数，
+		//那么为了使误算率尽量小，通过推导公式求出需要开辟的空间大约是插入元素个数的5倍。
+	}
+	void Set(const K& str)
+	{
+		map.Set(HashFunc1()(str)%BitSize);
+		map.Set(HashFunc2()(str)%BitSize);
+		map.Set(HashFunc3()(str)%BitSize);
+	}
+	bool Test(string str)
+	{
+		if (map.Test(HashFunc1()(str)%BitSize) == false)
+			return false;	  		 
+		if (map.Test(HashFunc2()(str)%BitSize) == false)
+			return false;	  		 
+		if (map.Test(HashFunc3()(str)%BitSize) == false)
+			return false;	  
+		return true;
+	}
+private:
+	BitMap map;
+	size_t BitSize; // 这里需要计数开辟位图的大小，用来和通过Hash函数得到的整数取模，
+					//因为这个整数可能很大，很有可能不在这个开辟的区间内，因此通过取模求得下标。
+};
+
+void TestBloomFilter()
+{
+	BloomFilter<> Bf(5);
+	Bf.Set("http://www.cnblogs.com/-clq/archive/2012/05/31/2528153.html");
+	Bf.Set("http://www.cnblogs.com/-clq/archive/2012/05/31/2825153.html");
+	Bf.Set("http://www.cnblogs.com/-clq/archive/2012/05/31/5282153.html");
+	Bf.Set("http://www.cnblogs.co153.html");
+	Bf.Set("http://www.cnblogs.coasdddddddaasdaaaave/2012/05/31/2528153.html");
+
+	cout<<Bf.Test("http://www.cnblogs.com/-clq/archive/2012/05/31/2528153.html")<<endl;
+	cout<<Bf.Test("http://www.cnblogs.com/-clq/archive/2012/05/31/2825153.html")<<endl;
+	cout<<Bf.Test("http://www.cnblogs.com/-clq/archive/2012/05/31/5282153.html")<<endl;
+	cout<<Bf.Test("http://www.cnblogs.co153.html")<<endl;
+	cout << Bf.Test("http://www.cnblogs.coasdddddddaasdaaaave/2012/05/31/2528153.html") << endl;
+	cout<<Bf.Test("http://wwwasssssssssss.cnblogs.coasdddddddaasdaaaave/2012/05/31/2528153.html")<<endl;
+}
+#endif //_BLOOMFILTER_H__
