@@ -1,0 +1,63 @@
+
+class TwoBitMap
+{
+public:
+	TwoBitMap(size_t size)
+	{
+		_tables.resize(size / 4 + 1,0);
+	}
+	void Set(size_t value)
+	{
+		size_t size = _tables.size();
+		size_t index = value >> 3;
+		size_t bit = value % 4;
+
+		size_t i = 1;
+		i <<= (bit * 2);//求出对应的bit位 
+
+		if (~(_tables[index] & (i << 1)))//判断第二个bit位上是否被置为1，若是这说明已经有两个重复的数了，则不再置。
+		{								//大于等于10，则不进去，00或01进去。
+			_tables[index] += i;
+		}
+	}
+	bool Test(size_t value)
+	{
+		size_t size = _tables.size();
+		size_t index = value >> 3;
+		size_t bit = value % 4;
+
+		size_t i = 1;
+		i <<= (bit * 2);
+		if (_tables[index] & i)//可以确定大于等于01，一次以上
+		{
+			if (_tables[index] & (i << 1))//大于等于10，多次
+				return false;
+			else
+				return true; //等于01，一次
+		}
+		return false;//0次
+	}
+private:
+	vector<char> _tables;
+};
+void TestBitMap()
+{
+	//BitMap bm(1024*1024*1024*4);
+	TwoBitMap bm(-1);
+	bm.Set(8);
+	bm.Set(3);
+	bm.Set(3);
+	bm.Set(3);
+	bm.Set(3);
+	bm.Set(3);
+	bm.Set(3);
+	bm.Set(1001111);
+	bm.Set(1002221);
+
+	cout << bm.Test(8) << endl;
+	cout << bm.Test(3) << endl;
+	cout << bm.Test(1001) << endl;
+	cout << bm.Test(1002221) << endl;
+
+
+}
