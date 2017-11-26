@@ -1,0 +1,49 @@
+void Merge(int *a, int begin ,int mid,int end)
+{
+	int *tmp = new int[end - begin + 1];
+
+	int begin1 = begin;
+	int begin2 = mid+1;
+	int end1 = mid;
+	int end2 = end;
+
+	int index = 0;
+	while (begin1 <= end1&&begin2 <= end2)
+	{
+		while (begin1<=end1&&a[begin1] <= a[begin2])
+		{
+			tmp[index++] = a[begin1++];
+		}
+		while (begin2<=end2&&a[begin1]>=a[begin2])
+		{
+			tmp[index++] = a[begin2++];
+		}
+	}
+	while (begin2 <= end2&&begin1 > end1)
+	{
+		tmp[index++] = a[begin2++];
+	}
+	while (begin1 <= end1&&begin2 > end2)
+	{
+		tmp[index++] = a[begin1++];
+	}
+	for (int i = begin, j = 0; i <= end; i++, j++)
+	{
+		a[i] = tmp[j];
+	}
+	delete[] tmp;
+}
+
+void MergeSort(int *a, int left, int right)
+{
+	if (left >= right)
+		return;
+	int mid = left + ((right - left) >> 1);
+
+	MergeSort(a, left, mid);
+	MergeSort(a, mid+1, right);
+
+	//¹é²¢
+	Merge(a, left, mid, right);
+
+}
