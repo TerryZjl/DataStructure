@@ -1,0 +1,59 @@
+void RadixSort(int* a, size_t n)
+{
+	int counts[10] = { 0 };//统计同一位上相同的数据出现的次数
+	int start[10] = { 0 }; //统计同一位上不相同的数据在数组上的第一个起始位置
+	//方法1.
+	//int range = 0; // 最大数字的位数
+	//int max = a[0];//最大数
+	//for (int i = 1; i < n; i++)
+	//{
+	//	if (a[i] < max)
+	//		max = a[i];
+	//}
+	//while (max)
+	//{
+	//	max /= 10;
+	//	++range;
+	//}
+	//方法2.
+	int Base = 10;
+	int range = 1;
+	for (int i = 1; i < n; i++)
+	{
+		if (a[i] >= Base)
+		{
+			++range;
+			Base *= 10;
+		}
+	}
+	int* tmp = new int[n];
+	Base = 1;
+	for (int j = 0;j<range; j++)
+	{
+		for (int i = 0; i < n; i++)
+		{
+			counts[a[i]/Base % 10]++;
+		}
+
+		for (int i = 1; i < n; i++)
+		{
+			start[i] = start[i - 1] + counts[i - 1];
+		}
+
+		for (int i = 0; i < n; i++)
+		{
+			size_t index = start[a[i] / Base % 10]++;
+			tmp[index] = a[i];
+		}
+		for (int i = 0; i < n; i++)
+		{
+			a[i] = tmp[i];
+			counts[i] = 0;
+			start[i] = 0;
+		}
+		Base *= 10;
+	}
+
+	delete[] tmp;
+
+}
