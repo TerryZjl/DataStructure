@@ -1,0 +1,69 @@
+#ifndef _UNIONFIND_H_
+#define _UNIONFIND_H_
+
+#include<iostream>
+using namespace std;
+#include<vector>
+
+class UnionSet
+{
+public:
+	UnionSet(int n)
+	{
+		_v.resize(n+1, -1);
+	}
+	void Set(int friend1, int friend2)
+	{
+		int index1 = GetIndex(friend1);
+		int index2 = GetIndex(friend2);
+		_v[friend1] += _v[friend2];
+		_v[friend2] = friend1;
+	}
+	int Test()
+	{
+		int num = 0;
+		int size = _v.size();
+		for (int i = 1;i<size;i++)
+		{
+			if (_v[i] < 0)
+			{
+				++num;
+			}
+		}
+		return num;
+	}
+
+private:
+	int GetIndex(int num)
+	{
+		while (_v[num]>=0)
+		{
+			num = _v[num];
+		}
+		return num;
+	}
+private:
+	vector<int> _v;
+};
+
+void friends(int n, int m, int r[][2])
+{
+	UnionSet Uset(n);
+	for (int i = 0;i<m;i++)
+	{
+		Uset.Set(r[i][0], r[i][1]);
+	}
+	cout << "ÅóÓÑÈ¦£º"<< Uset.Test() << endl;
+
+}
+
+void TestUnionFind()
+{
+	int r[][2] = { { 1, 2 }, { 2, 3 }, { 4, 5 }, { 6, 7 }, { 1, 8 }, {9,10} };
+	int n = 10;
+	int m = 6;
+	friends(n,m,r);
+}
+
+#endif //_UNIONFIND_H_
+
