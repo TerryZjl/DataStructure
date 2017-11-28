@@ -1,0 +1,26 @@
+	void GFS()
+		{
+			queue<V> q;
+			q.push(_vertexs[0]);
+			vector<bool> visited;
+			visited.resize(_vertexs.size(), false);
+			while (!q.empty())
+			{
+				V tmp = q.front();
+				size_t index = GetIndex(tmp);
+				if (visited[index] == false)
+				{
+					cout << tmp << "->";
+					visited[index] = true;
+				}
+				Edge<V,W>* cur = _graphtable[index];
+				while (cur)
+				{
+					size_t index = GetIndex(cur->_des);
+					if (visited[index] == false)
+						q.push(cur->_des);
+					cur = cur->_next;
+				}
+				q.pop();
+			}
+		}
