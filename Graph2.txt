@@ -1,0 +1,127 @@
+#ifndef _GRAPH_H
+#define _GRAPH_H
+
+#include<iostream>
+using namespace std;
+#include<vector>
+#include<assert.h>
+#include<string>
+#include<map>
+#include<queue>
+
+namespace GraphTable
+{
+	template<class V,class W>
+	struct Edge
+	{
+		V _src;
+		V _des;
+		W _w;
+		Edge* _next;
+		Edge(const V& src, const V& des, const W& w)
+			:_src(src)
+			, _des(des)
+			, _w(w)
+			, _next(NULL)
+		{}
+	};
+	template<class V, class W, bool direct = false>
+	class Graph
+	{
+	public:
+		Graph(const V* vertexs, size_t n)
+		{
+			_vertexs.resize(n);
+			for (size_t i = 0; i < n; i++)
+			{
+				_vertexs[i] = vertexs[i];
+				_mapindex[_vertexs[i]] = i;
+			}
+			_graphtable.resize(n, NULL);
+		}
+		size_t GetIndex(const V& vertex)
+		{
+			assert(_mapindex.count(vertex) == 1); // 防止没有这个顶点
+			return _mapindex[vertex];
+		}
+		void _AddEdge(const size_t& srcIndex, const size_t& desIndex, Edge<V,W>* tmp)
+		{
+			//根据源找到插入的链表位置，然后头插
+			tmp->_next = _graphtable[srcIndex];
+			_graphtable[srcIndex] = tmp;
+		}
+
+		void AddEdge(const V& src, const V& des, const W& w)
+		{
+			size_t serIndex = GetIndex(src);
+			size_t desIndex = GetIndex(des);
+
+			Edge<V,W>* tmp1 = new Edge<V,W>(src, des, w);
+			_AddEdge(serIndex, desIndex, tmp1);
+			if (direct == false)
+			{
+				Edge<V, W>* tmp2 = new Edge<V, W>(des, src, w);
+				_AddEdge(desIndex, serIndex, tmp2);
+			}
+		}
+
+		void GFS()
+		{
+			queue<V> q;
+			q.push(_vertexs[0]);
+			vector<bool> visited;
+			visited.resize(_vertexs.size(), false);
+			while (!q.empty())
+			{
+				V tmp = q.front();
+				size_t index = GetIndex(tmp);
+				if (visited[index] == false)
+				{
+					cout << tmp << "->";
+					visited[index] = true;
+				}
+				Edge<V,W>* cur = _graphtable[index];
+				while (cur)
+				{
+					size_t index = GetIndex(cur->_des);
+					if (visited[index] == false)
+						q.push(cur->_des);
+					cur = cur->_next;
+				}
+				q.pop();
+			}
+		}
+	private:
+		vector<V> _vertexs;         //顶点集合
+		map<V, size_t> _mapindex;   //顶点和数组下标的映射 
+		vector<Edge<V,W>*> _graphtable;  // 临接表 数组里存的是和下标相邻的边
+	};
+}
+void TestGraph()
+{
+	//string str[] = { "西安","成都","广州","杭州","济南","北京" };
+	//GraphMatrix::Graph<string, int> gm(str, sizeof(str) / sizeof(str[0]));
+	//gm.AddEdge("西安", "成都", 700);
+	//gm.AddEdge("西安", "北京", 1000);
+	//gm.AddEdge("成都", "广州", 1300);
+	//gm.AddEdge("广州", "杭州", 800);
+	//gm.AddEdge("杭州", "济南", 600);
+	//gm.AddEdge("济南", "北京", 500);
+	//gm.AddEdge("广州", "北京", 2000);
+	//gm.AddEdge("济南", "西安", 1200);
+	string str[] = { "西安","成都","广州","杭州","济南","北京" };
+	GraphTable::Graph<string, int> gm(str, sizeof(str) / sizeof(str[0]));
+	gm.AddEdge("西安", "成都", 700);
+	gm.AddEdge("西安", "北京", 1000);
+	gm.AddEdge("成都", "广州", 1300);
+	gm.AddEdge("广州", "杭州", 800);
+	gm.AddEdge("杭州", "济南", 600);
+	gm.AddEdge("济南", "北京", 500);
+	gm.AddEdge("广州", "北京", 2000);
+	gm.AddEdge("济南", "西安", 1200);
+	int i = 0;
+
+	gm.GFS();
+}
+
+#endif //_GRAPH_H
