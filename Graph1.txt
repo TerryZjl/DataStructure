@@ -1,0 +1,63 @@
+#ifndef _GRAPH_H
+#define _GRAPH_H
+
+#include<iostream>
+using namespace std;
+#include<vector>
+#include<assert.h>
+#include<string>
+#include<map>
+
+template <class V, class W, bool direct = false>
+class Graph
+{
+public:
+	Graph(const V* vertexs,size_t n)
+	{
+		_vertexs.resize(n);
+		for (int i = 0; i < n; i++)
+		{
+			_vertexs[i] = vertexs[i];
+			_mapindex[_vertexs[i]] = i;
+		}
+		_matrix.resize(n);
+		for (int i = 0; i < n; i++)
+		{
+			_matrix[i].resize(n);
+		}
+	}
+	size_t GetIndex(const V& vertex)
+	{
+		assert(_mapindex.count(vertex) == 1);
+		return _mapindex[vertex];
+	}
+	void AddEdge(const V& src, const V& des,const W& w)
+	{
+		size_t srcIndex = GetIndex(src);
+		size_t desIndex = GetIndex(des);
+		_matrix[srcIndex][desIndex] = w;
+		if (direct == false)
+			_matrix[desIndex][srcIndex] = w;
+	}
+private:
+	vector<V> _vertexs; //顶点集合						 //知道下标可以找顶点
+	vector<vector<W>> _matrix; //临接矩阵                //对应下边处存着权值
+	map<V, size_t> _mapindex; //顶点和数组下边的映射     //知道顶点可以找下标
+};
+
+void TestGraph()
+{
+	string str[] = { "西安","成都","广州","杭州","济南","北京" };
+	Graph<string, int> gm(str,sizeof(str)/sizeof(str[0]));
+	gm.AddEdge("西安", "成都", 700);
+	gm.AddEdge("西安", "北京", 1000);
+	gm.AddEdge("成都", "广州", 1300);
+	gm.AddEdge("广州", "杭州", 800);
+	gm.AddEdge("杭州", "济南", 600);
+	gm.AddEdge("济南", "北京", 500);
+	gm.AddEdge("广州", "北京", 2000);
+	gm.AddEdge("济南", "西安", 1200);
+	
+}
+
+#endif //_GRAPH_H
