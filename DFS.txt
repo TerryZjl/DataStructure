@@ -1,0 +1,26 @@
+	void _DFS(const V& v, vector<bool>& visit)
+		{
+			cout << v << "->";
+			size_t index = GetIndex(v);
+			visit[index] = true;
+
+			Edge<V, W>* cur = _graphtable[index];
+			while (cur)
+			{
+				if (visit[GetIndex(cur->_des)] == false) //访问过的节点就不在递归，否则会死循环。
+				{
+					_DFS(cur->_des, visit);
+				}
+				cur = cur->_next;
+			}
+		}
+
+		//深度优先
+		void DFS()
+		{
+			vector<bool> visited;  //用来标记哪些顶点被访问过了
+			visited.resize(_vertexs.size(), false);
+			_DFS(_vertexs[0],visited);
+			cout <<"NULL"<< endl;
+		}
+	
