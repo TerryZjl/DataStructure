@@ -8,6 +8,8 @@ using namespace std;
 #include<string>
 #include<map>
 #include<queue>
+#include<stack>
+
 
 namespace GraphTable
 {
@@ -64,7 +66,32 @@ namespace GraphTable
 				_AddEdge(desIndex, serIndex, tmp2);
 			}
 		}
+		void _DFS(const V& v, vector<bool>& visit)
+		{
+			cout << v << "->";
+			size_t index = GetIndex(v);
+			visit[index] = true;
 
+			Edge<V, W>* cur = _graphtable[index];
+			while (cur)
+			{
+				if (visit[GetIndex(cur->_des)] == false) //访问过的节点就不在递归，否则会死循环。
+				{
+					_DFS(cur->_des, visit);
+				}
+				cur = cur->_next;
+			}
+		}
+
+		//深度优先
+		void DFS()
+		{
+			vector<bool> visited;  //用来标记哪些顶点被访问过了
+			visited.resize(_vertexs.size(), false);
+			_DFS(_vertexs[0],visited);
+			cout <<"NULL"<< endl;
+		}
+		//广度优先
 		void GFS()
 		{
 			queue<V> q;
@@ -73,23 +100,23 @@ namespace GraphTable
 			visited.resize(_vertexs.size(), false);
 			while (!q.empty())
 			{
-				V tmp = q.front();
-				size_t index = GetIndex(tmp);
-				if (visited[index] == false)
-				{
-					cout << tmp << "->";
+				V value = q.front();
+				size_t index = GetIndex(value);
+				if (visited[index] == false) //如果没访问过在访问，因为从队列里取出来的值也有可能是访问过的，
+				{                            //因为一个顶点可能分别被其他两个顶点带进队列两次，这样就队列里就出现了重复的顶点。
+					cout << value << "->";
 					visited[index] = true;
 				}
 				Edge<V,W>* cur = _graphtable[index];
 				while (cur)
 				{
-					size_t index = GetIndex(cur->_des);
-					if (visited[index] == false)
+					if (visited[GetIndex(cur->_des)] == false) //如果访问过了就不入队列
 						q.push(cur->_des);
 					cur = cur->_next;
 				}
 				q.pop();
 			}
+			cout <<"NULL"<< endl;
 		}
 	private:
 		vector<V> _vertexs;         //顶点集合
@@ -122,6 +149,7 @@ void TestGraph()
 	int i = 0;
 
 	gm.GFS();
+	gm.DFS();
 }
 
 #endif //_GRAPH_H
