@@ -1,23 +1,19 @@
-#include<iostream>
-using namespace std;
-
-
-//向下调整算法
-void AdJustDown(int* a, int i, size_t n)
+void AdjustDown(int *a, size_t i,size_t end)
 {
-	int Parent = i;
-	int Child = i * 2 + 1;
-	while (Child<n)
+	int parent = i;
+	int child = i * 2 + 1;
+
+	while (child<=end)
 	{
-		if (Child<(n - 1) && a[Child]< a[Child + 1])
+		if ((child < end) && a[child] < a[child + 1])
 		{
-			++Child;
+			child++;
 		}
-		if (a[Parent]< a[Child])
+		if (a[parent] < a[child])
 		{
-			swap(a[Child], a[Parent]);
-			Parent = Child;
-			Child = Parent * 2 + 1;
+			swap(a[parent], a[child]);
+			parent = child;
+			child = child * 2 + 1;
 		}
 		else
 		{
@@ -26,28 +22,15 @@ void AdJustDown(int* a, int i, size_t n)
 	}
 }
 
-
-//堆排升序-建大堆
-void HeapSort(int* a , int n)
+void HeapSort(int *a, size_t n)
 {
-	
-	for (int i = (n - 2) / 2; i >= 0; --i)
+	for (int i = (n-2)/2; i >=0; i--)
 	{
-		AdJustDown(a, i, n);
+		AdjustDown(a, i,n-1);
 	}
-
-	int cur = n;
-	while (cur>0)
+	for (int end = n - 1;end>0;end--)
 	{
-		swap(a[0], a[cur-1]);
-		--cur;
-		AdJustDown(a, 0, cur);
+		swap(a[end], a[0]);
+		AdjustDown(a, 0, end - 1);
 	}
-}
-
-void TestHeapSort()
-{
-	int a[] = { 10, 11, 13, 12, 16, 18, 15, 17, 14, 19 };
-	HeapSort(a, 10);
-	int i = 0;
 }
