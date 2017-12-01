@@ -1,0 +1,204 @@
+#ifndef _GRAPH_H
+#define _GRAPH_H
+
+#include<iostream>
+using namespace std;
+#include<vector>
+#include<assert.h>
+#include<string>
+#include<map>
+#include<queue>
+#include<stack>
+
+#include"UnionFind.h"
+namespace GraphTable
+{
+	template<class V,class W>
+	struct Edge
+	{
+		size_t _src;
+		size_t _des;
+		W _w;
+		Edge* _next;
+		Edge(const size_t& src, const size_t& des, const W& w)
+			:_src(src)
+			, _des(des)
+			, _w(w)
+			, _next(NULL)
+		{}
+	};
+	template<class V, class W, bool direct = false>
+	class Graph
+	{
+	public:
+		Graph()
+		{}
+		Graph(const V* vertexs, size_t n)
+		{
+			_vertexs.resize(n);
+			for (size_t i = 0; i < n; i++)
+			{
+				_vertexs[i] = vertexs[i];
+				_mapindex[_vertexs[i]] = i;
+			}
+			_graphtable.resize(n, NULL);
+		}
+		size_t GetIndex(const V& vertex)
+		{
+			assert(_mapindex.count(vertex) == 1); // 防止没有这个顶点
+			return _mapindex[vertex];
+		}
+		void _AddEdge(const size_t& srcIndex, const size_t& desIndex, const W& w)
+		{
+			//根据源找到插入的链表位置，然后头插
+			Edge<V, W>* tmp = new Edge<V, W>(srcIndex, desIndex, w);
+			tmp->_next = _graphtable[srcIndex];
+			_graphtable[srcIndex] = tmp;
+		}
+
+		void AddEdge(const V& src, const V& des, const W& w)
+		{
+			size_t serIndex = GetIndex(src);
+			size_t desIndex = GetIndex(des);
+
+
+			_AddEdge(serIndex, desIndex, w);
+			if (direct == false)
+			{
+				_AddEdge(desIndex, serIndex, w);
+			}
+		}
+		void _DFS(const size_t& index, vector<bool>& visit)
+		{
+			cout << _vertexs[index] << "->";
+			visit[index] = true;
+
+			Edge<V, W>* cur = _graphtable[index];
+			while (cur)
+			{
+				if (visit[cur->_des] == false) //访问过的节点就不在递归，否则会死循环。
+				{
+					_DFS(cur->_des, visit);
+				}
+				cur = cur->_next;
+			}
+		}
+		//深度优先
+		void DFS()
+		{
+			vector<bool> visited;  //用来标记哪些顶点被访问过了
+			visited.resize(_vertexs.size(), false);
+			_DFS(0,visited);
+			cout <<"NULL"<< endl;
+		}
+		//广度优先
+		void GFS()
+		{
+			queue<size_t> q;
+			q.push(0);
+			vector<bool> visited;
+			visited.resize(_vertexs.size(), false);
+			while (!q.empty())
+			{
+				size_t index = q.front();
+				if (visited[index] == false) //如果没访问过在访问，因为从队列里取出来的值也有可能是访问过的，
+				{                            //因为一个顶点可能分别被其他两个顶点带进队列两次，这样就队列里就出现了重复的顶点。
+					cout << _vertexs[index] << "->";
+					visited[index] = true;
+				}
+				Edge<V,W>* cur = _graphtable[index];
+				while (cur)
+				{
+					if (visited[cur->_des] == false) //如果访问过了就不入队列
+						q.push(cur->_des);
+					cur = cur->_next;
+				}
+				q.pop();
+			}
+			cout <<"NULL"<< endl;
+		}
+
+		bool Kruskal(Graph<V, W, direct>& mintree)
+		{
+			mintree._vertexs = _vertexs;
+			mintree._mapindex = _mapindex;
+			mintree._graphtable.resize(_vertexs.size(), NULL);
+
+			vector<Edge<V, W>*> edges;
+			for (size_t i = 0; i < _graphtable.size(); i++)
+			{
+				Edge<V, W>* cur = _graphtable[i];
+				while (cur)
+				{
+					if (cur->_src < cur->_des)
+						edges.push_back(cur);
+					cur = cur->_next;
+				}
+			}
+			struct Less
+			{
+				bool operator()(const Edge<V,W>* l,const Edge<V,W>* r)
+				{
+					return l->_w < r->_w;
+				}
+			};
+			sort(edges.begin(), edges.end(), Less());
+			
+			size_t N = _vertexs.size() - 1;
+			for (size_t i = 0; i < edges.size(); i++)
+			{
+				UnionSet uset(_vertexs.size());
+				Edge<V, W>* cur = edges[i];
+				if (uset.IsSameSet(cur->_src, cur->_des) == false)
+				{
+					mintree._AddEdge(cur->_src, cur->_des, cur->_w);
+					mintree._AddEdge(cur->_des, cur->_src, cur->_w);
+					uset.Set(cur->_src, cur->_des);
+					if (--N == 0)
+					{
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+	private:
+		vector<V> _vertexs;         //顶点集合
+		map<V, size_t> _mapindex;   //顶点和数组下标的映射 
+		vector<Edge<V,W>*> _graphtable;  // 临接表 数组里存的是和下标相邻的边
+	};
+}
+void TestGraph()
+{
+	//string str[] = { "西安","成都","广州","杭州","济南","北京" };
+	//GraphMatrix::Graph<string, int> gm(str, sizeof(str) / sizeof(str[0]));
+	//gm.AddEdge("西安", "成都", 700);
+	//gm.AddEdge("西安", "北京", 1000);
+	//gm.AddEdge("成都", "广州", 1300);
+	//gm.AddEdge("广州", "杭州", 800);
+	//gm.AddEdge("杭州", "济南", 600);
+	//gm.AddEdge("济南", "北京", 500);
+	//gm.AddEdge("广州", "北京", 2000);
+	//gm.AddEdge("济南", "西安", 1200);
+	string str[] = { "西安","成都","广州","杭州","济南","北京" };
+	GraphTable::Graph<string, int> gm(str, sizeof(str) / sizeof(str[0]));
+	gm.AddEdge("西安", "成都", 700);
+	gm.AddEdge("西安", "北京", 1000);
+	gm.AddEdge("成都", "广州", 1300);
+	gm.AddEdge("广州", "杭州", 800);
+	gm.AddEdge("杭州", "济南", 600);
+	gm.AddEdge("济南", "北京", 500);
+	gm.AddEdge("广州", "北京", 2000);
+	gm.AddEdge("济南", "西安", 1200);
+	int i = 0;
+
+	gm.GFS();
+	gm.DFS();
+
+	GraphTable::Graph<string, int> MinTree;
+	gm.Kruskal(MinTree);
+	MinTree.DFS();
+
+}
+
+#endif //_GRAPH_H
