@@ -85,7 +85,8 @@ namespace GraphTable
 			}
 		}
 		//深度优先
-		void DFS()                                                                                      	{
+		void DFS()                                               
+		{
 			vector<bool> visited;  //用来标记哪些顶点被访问过了
 			visited.resize(_vertexs.size(), false);
 			_DFS(0,visited);
@@ -118,32 +119,49 @@ namespace GraphTable
 			cout <<"NULL"<< endl;
 		}
 
+
 		bool Prim(Graph<V,W,direct>& mintree)
 		{
 			mintree._vertexs = _vertexs;
 			mintree._mapindex = _mapindex;
 			mintree._graphtable.resize(_vertexs.size(), NULL);
-
+			vector<bool> visited;
+			visited.resize(_vertexs.size(), false);
 			struct Less
 			{
 				bool operator()(const Edge<V,W>* l,const Edge<V,W>* r)
 				{
-					return l->_w < r->_w;
+					return l->_w > r->_w;
 				}
 			};
 			
 			priority_queue<Edge<V, W>*, vector<Edge<V, W>*>, Less> edges;
-			edges.push(_graphtable[0]);
-			size_t N = _vertexs.size();
+			
+			Edge<V, W>* cur = _graphtable[0];
+			visited[0] = true;
+			while (cur)
+			{
+				if (visited[cur->_des] == false)
+				{
+					edges.push(cur);
+				}
+				cur = cur->_next;
+			}
+		
+			size_t N = _vertexs.size()-1;
 			while (!edges.empty())
 			{
 				Edge<V, W>* tmp = edges.top();
+				visited[tmp->_des] = true;
+
 				edges.pop();
-				Edge<V, W>* cur = _graphtable[tmp->_des];
+				cur = _graphtable[tmp->_des];
 				while (cur)
 				{
-					if (cur->_des!=tmp->_src)
+					if (visited[cur->_des] == false)
+					{
 						edges.push(cur);
+					}
 					cur = cur->_next;
 				}
 				mintree._AddEdge(tmp->_src, tmp->_des, tmp->_w);
@@ -164,6 +182,16 @@ namespace GraphTable
 }
 void TestGraph()
 {
+	//string str[] = { "西安","成都","广州","杭州","济南","北京" };
+	//GraphMatrix::Graph<string, int> gm(str, sizeof(str) / sizeof(str[0]));
+	//gm.AddEdge("西安", "成都", 700);
+	//gm.AddEdge("西安", "北京", 1000);
+	//gm.AddEdge("成都", "广州", 1300);
+	//gm.AddEdge("广州", "杭州", 800);
+	//gm.AddEdge("杭州", "济南", 600);
+	//gm.AddEdge("济南", "北京", 500);
+	//gm.AddEdge("广州", "北京", 2000);
+	//gm.AddEdge("济南", "西安", 1200);
 	string str[] = { "西安","成都","广州","杭州","济南","北京" };
 	GraphTable::Graph<string, int> gm(str, sizeof(str) / sizeof(str[0]));
 	gm.AddEdge("西安", "成都", 700);
@@ -180,6 +208,8 @@ void TestGraph()
 	gm.DFS();
 
 	GraphTable::Graph<string, int> MinTree;
+	//gm.Kruskal(MinTree);
+	//MinTree.DFS();
 	gm.Prim(MinTree);
 	MinTree.DFS();
 }
