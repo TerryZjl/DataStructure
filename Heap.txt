@@ -18,9 +18,9 @@ struct Large
 template<class T>
 struct Less
 {
-	bool operator()(T& l, T& r)
+	bool operator()(T& left, T& right)
 	{
-		return l > r ? true : false;
+		return left > right ? true : false;
 	}
 };
 
