@@ -1,5 +1,5 @@
-#ifndef _Heap_H_
-#define _Heap_H_
+#ifndef _Heap_H__
+#define _Heap_H__
 
 #include<iostream>
 #include<vector>
