@@ -63,17 +63,56 @@ void TestOneAllocate()
 template<class thread, class inst>
 class __DefaultAllocTemplate
 {
-public:
-	static void* Allocate(size_t n)
+private:
+	enum 
 	{
+		__ALIGN = 8,
+		__MAXBYTES = 128,
+		__NFREELISTS = __MAXBYTES / __ALIGN
+	};
 
+	union Obj
+	{
+		union Obj* _FreeListNext;
+	};
+
+
+	typedef typename __MallocAllocTemplate <inst> MALLOC;
+public:
+
+    static void* Allocate(size_t n)
+	{
+		if (n > __MAXBYTES)
+		{
+			return MALLOC::Allocate(n);
+		}
+		size_t index = GetFreeListIndex(n);
+		Obj* result = FreeList[index];
+		if (result == NULL)
+		{
+
+			void * ret = Refill(n);
+			return ret;
+		}
+		FreeList[index] = result->_FreeListNext;
+		return result;
 	}
-
+private:
+	static size_t RoundUp(size_t n);
+	static size_t GetFreeListIndex(size_t n);
+	static Obj* FreeList[__NFREELISTS] = { 0 };
 private:
 	static char* StartFree;
 	static char* EndFree;
 	static size_t HeapSize;
 
 };
+
+template<class thread, class inst>
+static size_t __DefaultAllocTemplate<thread, inst>::GetFreeListIndex(size_t n)
+{
+	return (n + __ALIGN - 1) /__ALIGN -1;
+}
+
 
 #endif
