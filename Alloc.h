@@ -90,16 +90,18 @@ public:
 		Obj* result = FreeList[index];
 		if (result == NULL)
 		{
-
-			void * ret = Refill(n);
+			size_t num = RoundUp(n);
+			void * ret = Refill(num); 
 			return ret;
 		}
 		FreeList[index] = result->_FreeListNext;
 		return result;
 	}
 private:
-	static size_t RoundUp(size_t n);
-	static size_t GetFreeListIndex(size_t n);
+	static void* ChunkAlloc(size_t n, size_t& nobjs); //
+	static void* Refill(size_t n);              //去内存池里面切想要大小的内存
+	static size_t RoundUp(size_t n);            //把要申请的字节数向上补齐到__ALIGN的倍数
+	static size_t GetFreeListIndex(size_t n);   //取出n映射到自由链表的下标位置
 	static Obj* FreeList[__NFREELISTS] = { 0 };
 private:
 	static char* StartFree;
@@ -107,6 +109,31 @@ private:
 	static size_t HeapSize;
 
 };
+template<class thread, class inst>
+static void* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& nobjs)
+{}
+
+template<class thread, class inst>
+static void* __DefaultAllocTemplate<thread, inst>::Refill(size_t n)
+{
+	size_t  nobjs = 20; // 设置一次切20块n大小的内存块挂到自由连上
+	void * result = ChunkAlloc(n, nobjs);
+
+	if (nobjs == 1)
+	{
+		return result;
+	}
+
+	size_t index = GetFreeListIndex(n);
+	Obj* cur = (Objs*)((char)result + __ALIGN);
+	for (size_t i = 0;i<nobjs;i++)
+	{
+		cur = FreeList[index]->_FreeListNext;
+		FreeList[index] = cur;
+	}
+	
+}
+
 
 template<class thread, class inst>
 static size_t __DefaultAllocTemplate<thread, inst>::GetFreeListIndex(size_t n)
@@ -114,5 +141,10 @@ static size_t __DefaultAllocTemplate<thread, inst>::GetFreeListIndex(size_t n)
 	return (n + __ALIGN - 1) /__ALIGN -1;
 }
 
+template<class thread, class inst>
+static size_t __DefaultAllocTemplate<thread, inst>::RoundUp(size_t n)
+{
+	return (n + __ALIGN - 1) &(~(__ALIGN-1));
+}
 
 #endif
