@@ -117,7 +117,7 @@ template<class thread, class inst>
 static void* __DefaultAllocTemplate<thread, inst>::Refill(size_t n)
 {
 	size_t  nobjs = 20; // 设置一次切20块n大小的内存块挂到自由连上
-	void * result = ChunkAlloc(n, nobjs);
+	void *result = ChunkAlloc(n, nobjs);
 
 	if (nobjs == 1)
 	{
@@ -125,13 +125,14 @@ static void* __DefaultAllocTemplate<thread, inst>::Refill(size_t n)
 	}
 
 	size_t index = GetFreeListIndex(n);
-	Obj* cur = (Objs*)((char)result + __ALIGN);
-	for (size_t i = 0;i<nobjs;i++)
+	Obj* cur = (Obj*)((char*)result + __ALIGN)；
+	for (size_t i = 0; i < nobjs - 1; i++)
 	{
-		cur = FreeList[index]->_FreeListNext;
-		FreeList[index] = cur;
+		Obj* tmp = cur;
+		tmp = FreeList[index]->_FreeListNext;
+		FreeList[index] = tmp; 
+		cur = (Obj*)((char*)cur + __ALIGN);
 	}
-	
 }
 
 
