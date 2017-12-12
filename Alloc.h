@@ -6,7 +6,7 @@ using namespace std;
 
 
 /**********一级空间配置器*****************/
-template<class inst>
+template<int inst>
 class __MallocAllocTemplate
 {
 public:
@@ -28,11 +28,11 @@ private:
 	static void(*__MallocALLocOomHandler)(); // 回调处理函数
 };
 
-template<class inst>
+template<int inst>
 void(*__MallocAllocTemplate<inst>::__MallocALLocOomHandler)() = 0;
 
 
-template<class inst>
+template<int inst>
 void* __MallocAllocTemplate<inst>::OomMalloc(size_t n)
 {
 	void(*MyHandler)();
@@ -54,13 +54,17 @@ void* __MallocAllocTemplate<inst>::OomMalloc(size_t n)
 
 void TestOneAllocate()
 {
-	__MallocAllocTemplate<int>::Allocate(0x7fffffff);
+	__MallocAllocTemplate<0>::Allocate(0x7fffffff);
 }
 
 
-
+union Obj
+{
+	union Obj* _FreeListNext;
+	char client_data[1];    /* The client sees this.*/
+};
 /***************二级空间配置器****************/
-template<class thread, class inst>
+template<bool thread, int inst>
 class __DefaultAllocTemplate
 {
 private:
@@ -71,14 +75,9 @@ private:
 		__NFREELISTS = __MAXBYTES / __ALIGN
 	};
 
-	union Obj
-	{
-		union Obj* _FreeListNext;
-	};
-
-
 	typedef typename __MallocAllocTemplate <inst> MALLOC;
 public:
+
     static void* Allocate(size_t n)
 	{
 		if (n > __MAXBYTES)
@@ -112,9 +111,9 @@ public:
 		*MyFreeList = del;
 	}
 private:
-	static void* ChunkAlloc(size_t n, size_t& nobjs); //
-	static void* Refill(size_t n);              //去内存池里面切想要大小的内存
-	static size_t RoundUp(size_t n);            //把要申请的字节数向上补齐到__ALIGN的倍数
+	static char* ChunkAlloc(size_t n, size_t& nobjs); //
+	static void* Refill(size_t n);              //去内存池里面切想要大小的内存;
+	static size_t RoundUp(size_t n);           //把要申请的字节数向上补齐到__ALIGN的倍数
 	static size_t GetFreeListIndex(size_t n);   //取出n映射到自由链表的下标位置
 private:
 	static Obj* FreeList[__NFREELISTS];
@@ -124,22 +123,22 @@ private:
 	static size_t HeapSize; //当前内存池的大小
 
 };
-template<class thread, class inst>
-char* __DefaultAllocTemplate<thread, inst>::FreeList[__NFREELISTS] = { 0 };
-template<class thread, class inst>
+template<bool thread,int inst>
+Obj* __DefaultAllocTemplate<thread, inst>::FreeList[__NFREELISTS] = { 0 };
+template<bool thread, int inst>
 char* __DefaultAllocTemplate<thread, inst>::StartFree = NULL;
-template<class thread, class inst>
+template<bool thread, int inst>
 char* __DefaultAllocTemplate<thread, inst>::EndFree = NULL;
-template<class thread, class inst>
-char* __DefaultAllocTemplate<thread, inst>::HeapSize = 0;
+template<bool thread, int inst>
+size_t __DefaultAllocTemplate<thread, inst>::HeapSize = 0;
 
 
-template<class thread, class inst>
-static void* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& nobjs)
+template<bool thread, int inst>
+char* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& nobjs)
 {
 	size_t SizeBytes = EndFree - StartFree;
 	size_t total = n*nobjs;
-	void *result;
+	char *result;
 	Obj* MyFreeList;
 	if (SizeBytes >= total)  //内存池里的字节足够申请nobjs个n，去内存池里面切
 	{
@@ -156,12 +155,13 @@ static void* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& 
 	}
 	else // 内存池里面一个n字节大小的内存都没有
 	{
-		if (total > 0)
+		if (SizeBytes> 0)
 		{
 			size_t index = GetFreeListIndex(SizeBytes);
 			MyFreeList = FreeList[index];
-			((Obj*)StartFree)->_FreeListNext = *MyFreeList;
-			*MyFreeList = (Obj*)StartFree;
+			((Obj*)StartFree)->_FreeListNext = MyFreeList;
+			MyFreeList = (Obj*)StartFree;
+			FreeList[index] = MyFreeList;
 			StartFree = NULL;
 		}
 		
@@ -178,9 +178,11 @@ static void* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& 
 				{
 					StartFree = (char*)MyFreeList;
 					EndFree = StartFree + i;
+					FreeList[GetFreeListIndex(i)] = NULL;
 					return  __DefaultAllocTemplate<thread, inst>::ChunkAlloc(n, nobjs);
 				}
 			}
+			EndFree = NULL;  //若一级空间配置器处理异常完毕，下一次申请内存时，本来StartFree和EndFree应该都为空，但EndFree若不置空，则显示有一大块内存
 			StartFree = (char*)MALLOC::Allocate(GetNBytes);
 		}
 
@@ -190,11 +192,13 @@ static void* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& 
 	}
 }
 
-template<class thread, class inst>
-static void* __DefaultAllocTemplate<thread, inst>::Refill(size_t n)
+template<bool thread, int inst>
+void* __DefaultAllocTemplate<thread, inst>::Refill(size_t n)
 {
 	size_t  nobjs = 20; // 设置一次切20块n大小的内存块挂到自由连上
-	void *result = ChunkAlloc(n, nobjs);
+	Obj *MyFreeList;
+	Obj* cur;
+	char *result = ChunkAlloc(n, nobjs);
 
 	if (nobjs == 1)
 	{
@@ -202,25 +206,28 @@ static void* __DefaultAllocTemplate<thread, inst>::Refill(size_t n)
 	}
 
 	size_t index = GetFreeListIndex(n);
-	Obj* cur = (Obj*)((char*)result + __ALIGN)；
+	MyFreeList = FreeList[index];
+
+	cur = (Obj*)(result + n);
+
 	for (size_t i = 0; i < nobjs - 1; i++)
 	{
-		Obj* tmp = cur;
-		tmp = FreeList[index]->_FreeListNext;
-		FreeList[index] = tmp; 
+		cur->_FreeListNext = MyFreeList;
+		MyFreeList = cur;
 		cur = (Obj*)((char*)cur + __ALIGN);
 	}
+	FreeList[index] = MyFreeList;
 	return result;
 }
 
-template<class thread, class inst>
-static size_t __DefaultAllocTemplate<thread, inst>::GetFreeListIndex(size_t n)
+template<bool thread, int inst>
+size_t __DefaultAllocTemplate<thread, inst>::GetFreeListIndex(size_t n)
 {
 	return (n + __ALIGN - 1) /__ALIGN -1;
 }
 
-template<class thread, class inst>
-static size_t __DefaultAllocTemplate<thread, inst>::RoundUp(size_t n)
+template<bool thread, int inst>
+size_t __DefaultAllocTemplate<thread, inst>::RoundUp(size_t n)
 {
 	return (n + __ALIGN - 1) &(~(__ALIGN-1));
 }
@@ -233,10 +240,12 @@ public:
 	{
 		return 0 == n ? 0 : (T*)Alloc::Allocate(n * sizeof (T));
 	}
+
 	static T *Allocate(void)
 	{
-		return (T*)Alloc:Allocate(sizeof (T));
+		return (T*)Alloc::Allocate(sizeof (T));
 	}
+
 	static void Deallocate(T *p, size_t n)
 	{
 		if (0 != n) Alloc::Deallocate(p, n * sizeof (T));
@@ -246,4 +255,6 @@ public:
 		Alloc::Deallocate(p, sizeof (T));
 	}
 };
+
+typedef __DefaultAllocTemplate<false, 0> alloc;
 #endif
