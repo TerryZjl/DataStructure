@@ -394,5 +394,45 @@ private:
 };
 
 
+#include<iostream>
+#include<windows.h>
+#include<string>
+#include"List.h"
+using namespace std;
+
+#include"Alloc.h"
+
+
+void TestList()
+{
+	List<int, alloc> l;
+	for (int i = 1; i <99999 ; i++)
+	{
+		l.PushBack(i);
+	}
+	List<int, alloc>::Iterator it = l.Begin();
+	while (it != l.End())
+	{
+		cout << *it << " ";
+		++it;
+	}
+	cout << endl;
+}
+
+int main()
+{
+	try
+	{
+		//TestOneAllocate();
+		TestList();
+	}
+	catch (...)
+	{
+		cout << "内存申请失败"<< endl;
+	}
+	system("pause");
+	return 0;
+}
+
 
 
