@@ -107,8 +107,10 @@ public:
 		
 		MyFreeList = FreeList[GetFreeListIndex(n)];
 		//多线程需要加锁
-		del->_FreeListNext = *MyFreeList;
-		*MyFreeList = del;
+		del->_FreeListNext = MyFreeList;
+		MyFreeList = del;
+		FreeList[GetFreeListIndex(n)] = MyFreeList;
+
 	}
 private:
 	static char* ChunkAlloc(size_t n, size_t& nobjs); //
@@ -136,28 +138,28 @@ size_t __DefaultAllocTemplate<thread, inst>::HeapSize = 0;
 template<bool thread, int inst>
 char* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& nobjs)
 {
-	size_t SizeBytes = EndFree - StartFree;
+	size_t PoolSizeBytes = EndFree - StartFree;
 	size_t total = n*nobjs;
 	char *result;
 	Obj* MyFreeList;
-	if (SizeBytes >= total)  //内存池里的字节足够申请nobjs个n，去内存池里面切
+	if (PoolSizeBytes >= total)  //内存池里的字节足够申请nobjs个n，去内存池里面切
 	{
 		result = StartFree;
 		StartFree = StartFree + total;
 		return result;
 	}
-	else if (SizeBytes >= n) // 内存池里的字节只够切1个及以上个n字节内存。
+	else if (PoolSizeBytes >= n) // 内存池里的字节只够切1个及以上个n字节内存。
 	{
-		nobjs = SizeBytes % n;
+		nobjs = PoolSizeBytes % n;
 		result = StartFree;
 		StartFree = StartFree + n*nobjs;
 		return result;
 	}
 	else // 内存池里面一个n字节大小的内存都没有
 	{
-		if (SizeBytes> 0)
+		if (PoolSizeBytes> 0)
 		{
-			size_t index = GetFreeListIndex(SizeBytes);
+			size_t index = GetFreeListIndex(PoolSizeBytes);
 			MyFreeList = FreeList[index];
 			((Obj*)StartFree)->_FreeListNext = MyFreeList;
 			MyFreeList = (Obj*)StartFree;
@@ -165,7 +167,7 @@ char* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& nobjs)
 			StartFree = NULL;
 		}
 		
-		size_t GetNBytes = total + (HeapSize >> 4);
+		size_t GetNBytes = 2*total + (HeapSize >> 4);
 		StartFree = (char*)malloc(GetNBytes);
 		if (StartFree == NULL)
 		{
@@ -196,26 +198,38 @@ template<bool thread, int inst>
 void* __DefaultAllocTemplate<thread, inst>::Refill(size_t n)
 {
 	size_t  nobjs = 20; // 设置一次切20块n大小的内存块挂到自由连上
-	Obj *MyFreeList;
+	char *Chunk = ChunkAlloc(n, nobjs);
+	Obj* MyFreeList;
+	Obj* next;
 	Obj* cur;
-	char *result = ChunkAlloc(n, nobjs);
+	Obj* result;
 
 	if (nobjs == 1)
 	{
-		return result;
+		return Chunk;
 	}
 
 	size_t index = GetFreeListIndex(n);
 	MyFreeList = FreeList[index];
+	
+	result = (Obj *)Chunk;
+	MyFreeList = next = (Obj *)(Chunk + n);
 
-	cur = (Obj*)(result + n);
-
-	for (size_t i = 0; i < nobjs - 1; i++)
+	for (size_t i = 0; ; i++)
 	{
-		cur->_FreeListNext = MyFreeList;
-		MyFreeList = cur;
-		cur = (Obj*)((char*)cur + __ALIGN);
+		cur = next;
+		next = (Obj *)((char*)next + n);
+		if (i == (nobjs - 2))
+		{
+			cur->_FreeListNext = NULL;
+			break;
+		}
+		else
+		{
+			cur->_FreeListNext = next;
+		}
 	}
+
 	FreeList[index] = MyFreeList;
 	return result;
 }
