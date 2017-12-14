@@ -54,7 +54,7 @@ void* __MallocAllocTemplate<inst>::OomMalloc(size_t n)
 
 void TestOneAllocate()
 {
-	__MallocAllocTemplate<0>::Allocate(0x7fffffff);
+	__MallocAllocTemplate<0>::Allocate(2147483646);
 }
 
 
@@ -150,7 +150,7 @@ char* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& nobjs)
 	}
 	else if (PoolSizeBytes >= n) // 内存池里的字节只够切1个及以上个n字节内存。
 	{
-		nobjs = PoolSizeBytes % n;
+		nobjs = PoolSizeBytes / n;
 		result = StartFree;
 		StartFree = StartFree + n*nobjs;
 		return result;
