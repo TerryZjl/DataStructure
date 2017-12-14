@@ -2,6 +2,7 @@
 #define _ALLOC_H_
 
 #include<iostream>
+#include<new>
 using namespace std;
 
 
@@ -23,37 +24,50 @@ public:
 	{
 		free(p);
 	}
+	static bool (*SetOomHandler(bool(*f)()))()
+	{
+		bool (*Old)() = __MallocALLocOomHandler;
+		__MallocALLocOomHandler = f;
+		return Old;
+	}
 private:
-	static void *OomMalloc(size_t);   //内存不足时的处理函数
-	static void(*__MallocALLocOomHandler)(); // 回调处理函数
+	static void *OomMalloc(size_t);           //内存不足时的处理函数
+	static bool(*__MallocALLocOomHandler)();  // 用户自定义内存申请失败处理函数
 };
 
 template<int inst>
-void(*__MallocAllocTemplate<inst>::__MallocALLocOomHandler)() = 0;
+bool (*__MallocAllocTemplate<inst>::__MallocALLocOomHandler)() = 0;
 
 
 template<int inst>
 void* __MallocAllocTemplate<inst>::OomMalloc(size_t n)
 {
-	void(*MyHandler)();
+	bool (*MyHandler)();
 	void *ret;
-
+	bool IsSetHandler = true;
 	MyHandler = __MallocALLocOomHandler;
 	while (1)
 	{
-		if (MyHandler == 0)
+		if ((MyHandler == 0) || IsSetHandler == false)
 		{
-			throw("内存申请失败");
+			throw bad_alloc();
 		}
-		(*MyHandler)();   //如果设置了回调处理函数，就执行这个函数，然后直到申请成功。
+		IsSetHandler = MyHandler();   //如果设置了回调处理函数，就执行这个函数，然后直到申请成功。
 		ret = malloc(n);
 		if (ret)
 			return ret;
 	}
 }
 
+bool DefinedOomhandler()
+{
+	cout << "内存没哟了" << endl;
+	return false;
+}
+
 void TestOneAllocate()
 {
+	__MallocAllocTemplate<0>::SetOomHandler(&DefinedOomhandler);
 	__MallocAllocTemplate<0>::Allocate(2147483646);
 }
 
