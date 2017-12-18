@@ -6,16 +6,15 @@
 using namespace std;
 
 
-/**********一级空间配置器*****************/
+/***********一级空间配置器*****************/
 template<int inst>
 class __MallocAllocTemplate
 {
 public:
-	static void* Allocate(size_t n)
+	static void*  Allocate(size_t n)
 	{
 		void* ret = malloc(n);
-		if (ret == NULL)
-		{
+		if (ret == NULL){
 			ret = OomMalloc(n);
 		}
 		return ret;
