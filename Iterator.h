@@ -1,6 +1,8 @@
 #ifndef _ITERATOR_H_
 #define _ITERATOR_H_
 
+#include<iostream>
+using namespace std;
 
 /*
 *这些类只做标记使用
@@ -67,7 +69,7 @@ struct IteratorTraits<const T*>{
 /******************对“特性萃取机“进行封装方便用户使用*************************/
 
 //方便使用者决定某个迭代器类型
-template<class It>
+/*template<class It>
 inline typename IteratorTraits<It>::IteratorCategory IteratorCategory(const It&)
 {
 	typedef typename IteratorTraits<It>::IteratorCategory Category;
@@ -86,12 +88,12 @@ inline typename IteratorTraits<It>::DifferenceType* DifferenceType(const It&)
 {
 	typedef typename IteratorTraits<It>::DifferenceType DifferenceType;
 	return DifferenceType(0);
-}
+}*/
 
 
 template<class InputIterator>
-inline typename IteratorTraits<InputIterator>::DifferenceType\
-__Distance(InputIterator Begin, InputIterator End)
+inline typename IteratorTraits<InputIterator>::DifferenceType
+__Distance(InputIterator Begin, InputIterator End, InputIteratorTag)
 {
 	typename IteratorTraits<InputIterator>::DifferenceType n;
 	while (Begin++)
@@ -104,17 +106,20 @@ __Distance(InputIterator Begin, InputIterator End)
 }
 
 template<class RandomAccessIterator>
-inline typename IteratorTraits<RandomAccessIterator>::DifferenceType \
-__Distance(RandomAccessIterator Begin, RandomAccessIterator End)
+inline typename IteratorTraits<RandomAccessIterator>::DifferenceType 
+__Distance(RandomAccessIterator Begin, RandomAccessIterator End, RandomAccessIteratorTag)
 {
 	typename IteratorTraits<RandomAccessIterator>::DifferenceType n;
-	while (Begin++)
-	{
-		if (Begin == End)
-			break;
-		++n;
-	}
+	n = Begin - End;
 	return n;
+}
+
+template<class InputIterator>
+inline typename IteratorTraits<InputIterator>::DiffereceType
+Distance(InputIterator Begin , InputIterator End)
+{
+	typename IteratorTraits<InputIterator>::IteratorCategory  Category;
+	return __Distance(Begin, End, Category);
 }
 
 
