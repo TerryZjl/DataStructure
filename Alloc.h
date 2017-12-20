@@ -2,19 +2,53 @@
 #define _ALLOC_H_
 
 #include<iostream>
-#include<new>
+#include<string>
 using namespace std;
 
+#define __USE_MALLOC
+/*****************trace************************/
+#define __DEBUG__
+static string GetFileName(const string& path)
+{
+	char ch = '/';
+#ifdef _WIN32
+	ch = '\\';
+#endif
+	size_t pos = path.rfind(ch);
+	if (pos == string::npos)
+		return path;
+	else
+		return path.substr(pos + 1);
+}
+//用于调试追溯的trace log
+inline static void __trace_debug(const char* function,\
+	const char* filename, int line, char* format, ...)
+{
+#ifdef __DEBUG__
+	//输出调用函数的信息
+	fprintf(stdout, "【%s:%d】%s", GetFileName(filename).c_str(), line, function);
+	//输出用户打的trace信息
+	va_list args;
+	va_start(args, format);
+	vfprintf(stdout, format, args);
+	va_end(args);
+#endif
+}
+#define __TRACE_DEBUG(...) \
+__trace_debug(__FUNCTION__, __FILE__, __LINE__, __VA_ARGS__);
 
-/***********一级空间配置器*****************/
+/**********一级空间配置器*****************/
 template<int inst>
 class __MallocAllocTemplate
 {
 public:
-	static void*  Allocate(size_t n)
+	static void* Allocate(size_t n)
 	{
 		void* ret = malloc(n);
-		if (ret == NULL){
+		__TRACE_DEBUG("一级空间配置器申请%dbytes内存\n", n);
+
+		if (ret == NULL)
+		{
 			ret = OomMalloc(n);
 		}
 		return ret;
@@ -37,7 +71,6 @@ private:
 template<int inst>
 bool (*__MallocAllocTemplate<inst>::__MallocALLocOomHandler)() = 0;
 
-
 template<int inst>
 void* __MallocAllocTemplate<inst>::OomMalloc(size_t n)
 {
@@ -58,7 +91,7 @@ void* __MallocAllocTemplate<inst>::OomMalloc(size_t n)
 	}
 }
 
-bool DefinedOomhandler()
+bool DefinedOomhandler()  //用户自定义函数
 {
 	cout << "内存没哟了" << endl;
 	return false;
@@ -70,13 +103,16 @@ void TestOneAllocate()
 	__MallocAllocTemplate<0>::Allocate(2147483646);
 }
 
+#ifdef __USE_MALLOC
+	typedef __MallocAllocTemplate<0> Alloc;
+#else
 
+/***************二级空间配置器****************/
 union Obj
 {
 	union Obj* _FreeListNext;
 	char client_data[1];    /* The client sees this.*/
 };
-/***************二级空间配置器****************/
 template<bool thread, int inst>
 class __DefaultAllocTemplate
 {
@@ -95,6 +131,7 @@ public:
 	{
 		if (n > __MAXBYTES)
 		{
+			__TRACE_DEBUG("调用一级空间配置器，Allocate(%d)\n", n);
 			return MALLOC::Allocate(n);
 		}
 		size_t index = GetFreeListIndex(n);
@@ -157,6 +194,7 @@ char* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& nobjs)
 	Obj* MyFreeList;
 	if (PoolSizeBytes >= total)  //内存池里的字节足够申请nobjs个n，去内存池里面切
 	{
+		__TRACE_DEBUG("从内存池里面切%d块，每块%dbytes\n", nobjs,n);
 		result = StartFree;
 		StartFree = StartFree + total;
 		return result;
@@ -164,6 +202,7 @@ char* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& nobjs)
 	else if (PoolSizeBytes >= n) // 内存池里的字节只够切1个及以上个n字节内存。
 	{
 		nobjs = PoolSizeBytes / n;
+		__TRACE_DEBUG("从内存池里面切%d块，每块%dbytes\n", nobjs, n);
 		result = StartFree;
 		StartFree = StartFree + n*nobjs;
 		return result;
@@ -181,6 +220,8 @@ char* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& nobjs)
 		}
 		
 		size_t GetNBytes = 2*total + (HeapSize >> 4);
+		__TRACE_DEBUG("内存池中的内存不足，malloc(%d)bytes内存\n",GetNBytes);
+
 		StartFree = (char*)malloc(GetNBytes);
 		if (StartFree == NULL)
 		{
@@ -197,6 +238,7 @@ char* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& nobjs)
 					return  __DefaultAllocTemplate<thread, inst>::ChunkAlloc(n, nobjs);
 				}
 			}
+			__TRACE_DEBUG("内存申请失败，调用一级空间配置器\n");
 			EndFree = NULL;  //若一级空间配置器处理异常完毕，下一次申请内存时，本来StartFree和EndFree应该都为空，但EndFree若不置空，则显示有一大块内存
 			StartFree = (char*)MALLOC::Allocate(GetNBytes);
 		}
@@ -219,6 +261,7 @@ void* __DefaultAllocTemplate<thread, inst>::Refill(size_t n)
 
 	if (nobjs == 1)
 	{
+		__TRACE_DEBUG("返回0x%x内存块\n", Chunk);
 		return Chunk;
 	}
 
@@ -242,6 +285,7 @@ void* __DefaultAllocTemplate<thread, inst>::Refill(size_t n)
 			cur->_FreeListNext = next;
 		}
 	}
+	__TRACE_DEBUG("返回0x%x内存块\n",result);
 
 	FreeList[index] = MyFreeList;
 	return result;
@@ -258,6 +302,9 @@ size_t __DefaultAllocTemplate<thread, inst>::RoundUp(size_t n)
 {
 	return (n + __ALIGN - 1) &(~(__ALIGN-1));
 }
+
+typedef __DefaultAllocTemplate<false, 0> Alloc;
+#endif
 
 template<class T, class Alloc>
 class simple_alloc {
@@ -283,5 +330,5 @@ public:
 	}
 };
 
-typedef __DefaultAllocTemplate<false, 0> alloc;
+
 #endif
