@@ -91,37 +91,36 @@ inline typename IteratorTraits<It>::DifferenceType* DifferenceType(const It&)
 }*/
 
 
+
+//计算双向迭代器及派生类的迭代器的距离
 template<class InputIterator>
-inline typename IteratorTraits<InputIterator>::DifferenceType
+inline typename IteratorTraits<InputIterator>::DifferenceType \
 __Distance(InputIterator Begin, InputIterator End, InputIteratorTag)
 {
-	typename IteratorTraits<InputIterator>::DifferenceType n;
-	while (Begin++)
-	{
-		if (Begin == End)
-			break;
+	typename IteratorTraits<InputIterator>::DifferenceType n = 0;
+
+	while ((++Begin)!=End)
 		++n;
-	}
 	return n;
 }
 
+//计算自由迭代器的距离
 template<class RandomAccessIterator>
-inline typename IteratorTraits<RandomAccessIterator>::DifferenceType 
+inline typename IteratorTraits<RandomAccessIterator>::DifferenceType \
 __Distance(RandomAccessIterator Begin, RandomAccessIterator End, RandomAccessIteratorTag)
 {
-	typename IteratorTraits<RandomAccessIterator>::DifferenceType n;
+	typename IteratorTraits<RandomAccessIterator>::DifferenceType n = 0;
 	n = Begin - End;
 	return n;
 }
 
 template<class InputIterator>
-inline typename IteratorTraits<InputIterator>::DiffereceType
-Distance(InputIterator Begin , InputIterator End)
+inline typename IteratorTraits<InputIterator>::DifferenceType \
+Distance(InputIterator Begin, InputIterator End)
 {
 	typename IteratorTraits<InputIterator>::IteratorCategory  Category;
 	return __Distance(Begin, End, Category);
 }
-
 
 #endif
 
