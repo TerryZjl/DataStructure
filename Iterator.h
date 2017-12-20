@@ -122,6 +122,66 @@ Distance(InputIterator Begin, InputIterator End)
 	return __Distance(Begin, End, Category);
 }
 
+/***********************反向迭代器（适配器）***********************************/
+template<class It>
+struct ReverseIterator 
+{
+	It _it;  //某个正向迭代器
+	typedef typename It::IteratorCategory  IteratorCategory;
+	typedef typename It::ValueType ValueType;
+	typedef typename It::DifferenceType DifferenceType;
+	typedef typename It::Pointer Pointer;
+	typedef typename It::Reference Reference;
+	typedef ReverseIterator<It> Self;
+
+	//explicit 避免隐式类型转换，例如把 ReIt = l.Begin(),这是不允许的。
+	explicit ReverseIterator(It it)
+		:_it(it)
+	{}
+
+ 	Self& operator++()
+	{
+		--_it;
+		return *this;
+	}
+	Self& operator++(int)
+	{
+		Self tmp = *this;
+		--_it;
+		return tmp;
+	}
+	Self& operator--()
+	{
+		++_it;
+		return *this;
+	}
+	Self& operator--(int)
+	{
+		Self tmp = *this;
+		++_it;
+		return tmp;
+	}
+	Reference operator*()
+	{
+		//为了RBegin和REnd符合常规思维，随意这里解引用后一个位置，
+		It tmp = _it;
+		--tmp;
+		return (*tmp);
+	}
+	Pointer operator->()
+	{
+		return &(*_it);
+	}
+	bool operator==(Self& it)
+	{
+		return _it == it._it ? true : false;
+	}
+	bool operator!=(Self& it)
+	{
+		return _it != it._it ? true : false;
+	}
+
+};
 #endif
 
 
