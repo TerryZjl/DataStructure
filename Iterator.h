@@ -47,7 +47,7 @@ struct IteratorTraits{
 //偏特化——针对迭代器是原生指针
 template<class T>
 struct IteratorTraits<T*>{
-	typedef T*  IteratorCategory;
+	typedef RandomAccessIteratorTag  IteratorCategory;
 	typedef T ValueType;
 	typedef size_t DifferenceType;
 	typedef T* Pointer;
@@ -57,7 +57,7 @@ struct IteratorTraits<T*>{
 //偏特化——针对迭代器是常指针，若用上面的特化这种情况，ValueType就是常数，就不能被改变。
 template<class T>
 struct IteratorTraits<const T*>{
-	typedef T*  IteratorCategory;
+	typedef RandomAccessIteratorTag  IteratorCategory;
 	typedef T ValueType;
 	typedef size_t DifferenceType;
 	typedef const T*  Pointer;
@@ -97,10 +97,12 @@ template<class InputIterator>
 inline typename IteratorTraits<InputIterator>::DifferenceType \
 __Distance(InputIterator Begin, InputIterator End, InputIteratorTag)
 {
-	typename IteratorTraits<InputIterator>::DifferenceType n = 0;
-
-	while ((++Begin)!=End)
+	IteratorTraits<InputIterator>::DifferenceType n = 0;
+	while (Begin != End)
+	{
 		++n;
+		++Begin;
+	}
 	return n;
 }
 
@@ -109,16 +111,15 @@ template<class RandomAccessIterator>
 inline typename IteratorTraits<RandomAccessIterator>::DifferenceType \
 __Distance(RandomAccessIterator Begin, RandomAccessIterator End, RandomAccessIteratorTag)
 {
-	typename IteratorTraits<RandomAccessIterator>::DifferenceType n = 0;
-	n = Begin - End;
-	return n;
+	return End - Begin;
 }
 
+//计算两个迭代器之间的距离
 template<class InputIterator>
 inline typename IteratorTraits<InputIterator>::DifferenceType \
 Distance(InputIterator Begin, InputIterator End)
 {
-	typename IteratorTraits<InputIterator>::IteratorCategory  Category;
+	IteratorTraits<InputIterator>::IteratorCategory  Category;
 	return __Distance(Begin, End, Category);
 }
 
@@ -127,11 +128,11 @@ template<class It>
 struct ReverseIterator 
 {
 	It _it;  //某个正向迭代器
-	typedef typename It::IteratorCategory  IteratorCategory;
-	typedef typename It::ValueType ValueType;
-	typedef typename It::DifferenceType DifferenceType;
-	typedef typename It::Pointer Pointer;
-	typedef typename It::Reference Reference;
+	typedef typename IteratorTraits<It>::IteratorCategory IteratorCategory;
+	typedef typename IteratorTraits<It>::ValueType ValueType;
+	typedef typename IteratorTraits<It>::DifferenceType DifferenceType;
+	typedef typename IteratorTraits<It>::Pointer Pointer;
+	typedef typename IteratorTraits<It>::Reference Reference;
 	typedef ReverseIterator<It> Self;
 
 	//explicit 避免隐式类型转换，例如把 ReIt = l.Begin(),这是不允许的。
