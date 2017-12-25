@@ -5,7 +5,9 @@
 #include<string>
 using namespace std;
 
-#define __USE_MALLOC
+//#define __USE_MALLOC
+
+
 /*****************trace************************/
 #define __DEBUG__
 static string GetFileName(const string& path)
@@ -143,6 +145,7 @@ public:
 			return ret;
 		}
 		FreeList[index] = result->_FreeListNext;
+		__TRACE_DEBUG("返回0x%x内存块\n", result);
 		return result;
 	}
 	static void Deallocate(void* p, size_t n)
@@ -220,7 +223,7 @@ char* __DefaultAllocTemplate<thread, inst>::ChunkAlloc(size_t n, size_t& nobjs)
 		}
 		
 		size_t GetNBytes = 2*total + (HeapSize >> 4);
-		__TRACE_DEBUG("内存池中的内存不足，malloc(%d)bytes内存\n",GetNBytes);
+		__TRACE_DEBUG("内存池中内存不足，malloc(%d)bytes内存\n",GetNBytes);
 
 		StartFree = (char*)malloc(GetNBytes);
 		if (StartFree == NULL)
@@ -285,7 +288,7 @@ void* __DefaultAllocTemplate<thread, inst>::Refill(size_t n)
 			cur->_FreeListNext = next;
 		}
 	}
-	__TRACE_DEBUG("返回0x%x内存块\n",result);
+	__TRACE_DEBUG("返回0x%x内存块，其余挂入FreeList[%d]\n",result,index);
 
 	FreeList[index] = MyFreeList;
 	return result;
