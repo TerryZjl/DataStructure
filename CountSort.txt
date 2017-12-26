@@ -14,7 +14,7 @@ void CountSort(int *a, size_t size)
 	tmp.resize(range, 0);
 	for (int i = 0; i < size; i++)
 	{
-		int index = a[i] % range;
+		int index = a[i] -  min;
 		tmp[index]++;
 	}
 	for (size_t i = 0,j = 0; i < range; i++)
