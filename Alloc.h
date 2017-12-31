@@ -109,7 +109,7 @@ void TestOneAllocate()
 	typedef __MallocAllocTemplate<0> Alloc;
 #else
 
-/***************二级空间配置器****************/
+/*****************二级空间配置器****************/
 union Obj
 {
 	union Obj* _FreeListNext;
